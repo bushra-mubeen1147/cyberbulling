@@ -1,0 +1,4 @@
+from backend.controllers.auth_controller import AuthController
+from backend.controllers.analysis_controller import AnalysisController
+from backend.controllers.history_controller import HistoryController
+from backend.controllers.admin_controller import AdminController

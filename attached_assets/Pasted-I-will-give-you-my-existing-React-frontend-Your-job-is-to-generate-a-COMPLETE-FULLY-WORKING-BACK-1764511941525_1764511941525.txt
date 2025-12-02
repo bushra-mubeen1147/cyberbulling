@@ -1,0 +1,81 @@
+I will give you my existing React frontend. 
+Your job is to generate a COMPLETE, FULLY WORKING BACKEND in Python + Flask + MongoDB.
+
+REQUIREMENTS:
+1. Create a full backend folder named "backend" with:
+   - app.py
+   - config.py
+   - models/
+   - routes/
+   - controllers/
+   - utils/
+   - __init__.py
+
+2. Use these technologies:
+   - Flask
+   - Flask-CORS
+   - Flask-JWT-Extended for authentication
+   - MongoDB + PyMongo (or Motor)
+   - bcrypt for passwords
+   - dotenv for environment variables
+
+3. Create ALL REQUIRED APIs for my website:
+   AUTH:
+   - POST /signup
+   - POST /login
+   - GET /user (return user profile using JWT)
+
+   ANALYSIS:
+   - POST /analyze
+     → For now, DO NOT use a real ML model.
+     → Use a mock function classify_text(text) that returns:
+          { "cyberbullying": true/false, "sarcasm": true/false }
+     → Later I will replace with my trained BERT model.
+
+   HISTORY:
+   - POST /history/add
+   - GET /history/<user_id>
+
+   ADMIN:
+   - GET /admin/users
+   - GET /admin/history
+   - DELETE /admin/user/<id>
+
+4. DATABASE SCHEMA (MongoDB):
+   USERS collection:
+     - _id
+     - name
+     - email
+     - password_hash
+     - role (“user” or "admin")
+     - created_at
+
+   ANALYSIS_HISTORY collection:
+     - _id
+     - user_id
+     - input_text
+     - result_cyberbullying
+     - result_sarcasm
+     - created_at
+
+5. Make sure:
+   - All routes return JSON
+   - All endpoints match EXACTLY with the frontend API calls
+   - CORS is enabled
+   - JWT expires in 7 days
+   - Passwords are hashed using bcrypt.hashpw
+
+6. Create clear instructions at the end:
+   - How to run the backend
+   - Required packages
+   - How to connect to MongoDB
+   - Base URL for frontend (http://localhost:5000)
+
+7. Generate CLEAN, ORGANIZED, PRODUCTION-READY CODE.
+   Everything must work without modification.
+
+IMPORTANT:
+- Output the complete backend folder structure
+- Provide all .py files with full code
+- Ensure no placeholder code or broken imports
+- Ensure all endpoints match my existing React code
