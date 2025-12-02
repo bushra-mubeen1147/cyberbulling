@@ -1,0 +1,97 @@
+# Model Integration Requirements
+# Add these to your existing requirements.txt based on your model type
+
+# ===================================================================
+# CHOOSE ONE SECTION BASED ON YOUR MODEL TYPE
+# ===================================================================
+
+# -------------------------------------------------------------------
+# Option A: For BERT/Transformer Models (Hugging Face)
+# -------------------------------------------------------------------
+transformers>=4.35.0
+torch>=2.1.0
+tokenizers>=0.15.0
+sentencepiece>=0.1.99  # For some models like T5, XLNet
+
+# Optional: For ONNX optimization
+# onnx>=1.15.0
+# onnxruntime>=1.16.0
+
+# -------------------------------------------------------------------
+# Option B: For TensorFlow/Keras Models
+# -------------------------------------------------------------------
+# tensorflow>=2.15.0
+# keras>=2.15.0
+# h5py>=3.10.0  # For loading .h5 model files
+
+# -------------------------------------------------------------------
+# Option C: For Scikit-learn Models
+# -------------------------------------------------------------------
+# scikit-learn>=1.3.2
+# joblib>=1.3.2
+# scipy>=1.11.4
+# numpy>=1.24.0
+
+# -------------------------------------------------------------------
+# Option D: For Pre-trained API Models
+# -------------------------------------------------------------------
+# detoxify>=0.5.1  # Google's Perspective API wrapper
+# transformers>=4.35.0
+# torch>=2.1.0
+
+# ===================================================================
+# COMMON NLP UTILITIES (Choose what you need)
+# ===================================================================
+
+# Text preprocessing
+# nltk>=3.8.1
+# spacy>=3.7.2
+# textblob>=0.17.1
+
+# Data handling
+# pandas>=2.1.4
+# numpy>=1.24.0
+
+# ===================================================================
+# PERFORMANCE & OPTIMIZATION (Optional)
+# ===================================================================
+
+# GPU acceleration (if using CUDA)
+# torch-cuda>=2.1.0
+
+# Model optimization
+# optimum>=1.16.0
+# accelerate>=0.25.0
+
+# Caching
+# diskcache>=5.6.3
+# redis>=5.0.1
+
+# ===================================================================
+# MONITORING & LOGGING (Recommended)
+# ===================================================================
+# psutil>=5.9.6  # System monitoring
+# prometheus-client>=0.19.0  # Metrics
+
+# ===================================================================
+# EXISTING REQUIREMENTS (Keep these)
+# ===================================================================
+Flask>=3.0.0
+Flask-CORS>=4.0.0
+python-dotenv>=1.0.0
+supabase>=2.3.0
+postgrest>=0.13.0
+
+# ===================================================================
+# INSTALLATION INSTRUCTIONS
+# ===================================================================
+# 1. Uncomment the section for YOUR model type
+# 2. Save this file as requirements.txt (or append to existing)
+# 3. Run: pip install -r requirements.txt
+#
+# For GPU support (NVIDIA CUDA):
+#   pip install torch --index-url https://download.pytorch.org/whl/cu118
+#
+# For CPU only (smaller, faster install):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# ===================================================================

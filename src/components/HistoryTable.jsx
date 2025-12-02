@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HistoryTable({ history, onDelete, darkMode }) {
@@ -29,7 +29,7 @@ export default function HistoryTable({ history, onDelete, darkMode }) {
               Sentiment
             </th>
             <th className={`px-4 py-3 text-left text-[11px] font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
-              Date
+              Date & Time
             </th>
             <th className={`px-4 py-3 text-left text-[11px] font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
               Action
@@ -61,7 +61,13 @@ export default function HistoryTable({ history, onDelete, darkMode }) {
                 {item.sentiment}
               </td>
               <td className={`px-4 py-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {item.date}
+                <div className="flex flex-col" title={item.fullDateTime}>
+                  <span className="text-sm font-medium">{item.date}</span>
+                  <span className="text-xs flex items-center gap-1 mt-0.5">
+                    <Clock className="w-3 h-3" />
+                    {item.time}
+                  </span>
+                </div>
               </td>
               <td className="px-4 py-3">
                 <button

@@ -12,6 +12,7 @@ import Profile from './pages/Profile.jsx';
 import About from './pages/About.jsx';
 import Services from './pages/Services.jsx';
 import Contact from './pages/Contact.jsx';
+import Admin from './pages/Admin.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -62,6 +63,7 @@ function App() {
             <Route path="history" element={<History darkMode={darkMode} />} />
             <Route path="profile" element={<Profile darkMode={darkMode} />} />
           </Route>
+          <Route path="/admin" element={<Admin darkMode={darkMode} />} />
           {/* Optional non-nested routes */}
           <Route path="/analyze" element={<Analyze darkMode={darkMode} />} />
           <Route path="/login" element={<Login darkMode={darkMode} setUser={setUser} />} />
