@@ -3,14 +3,22 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 
+def _dsn_with_ssl(dsn: str | None) -> str:
+    if not dsn:
+        raise RuntimeError("DATABASE_URL is not set. Provide your Supabase Postgres connection URI in .env")
+    # If sslmode already present, return as-is
+    if "sslmode=" in dsn:
+        return dsn
+    # Supabase typically requires SSL; append sslmode=require
+    sep = "&" if "?" in dsn else "?"
+    return f"{dsn}{sep}sslmode=require"
+
 @contextmanager
 def get_db_connection():
     conn = None
     try:
-        conn = psycopg2.connect(
-            os.environ.get('DATABASE_URL'),
-            cursor_factory=RealDictCursor
-        )
+        dsn = _dsn_with_ssl(os.environ.get('DATABASE_URL'))
+        conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
         yield conn
     except Exception as e:
         if conn:

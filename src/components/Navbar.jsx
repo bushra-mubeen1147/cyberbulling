@@ -1,11 +1,25 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Shield, Moon, Sun, LogOut, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthProvider.jsx';
 
-export default function Navbar({ darkMode, toggleDarkMode, user, onLogout }) {
+export default function Navbar({ darkMode, toggleDarkMode, user: legacyUser, onLogout }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const activeUser = user || legacyUser; // fallback
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      if (onLogout) onLogout();
+      navigate('/login');
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
+  };
 
   return (
     <motion.nav
@@ -37,7 +51,7 @@ export default function Navbar({ darkMode, toggleDarkMode, user, onLogout }) {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               to="/analyze"
               className={`transition-colors ${
                 isActive('/analyze')
@@ -48,8 +62,8 @@ export default function Navbar({ darkMode, toggleDarkMode, user, onLogout }) {
               }`}
             >
               Analyze
-            </Link>
-            <Link
+            </Link> */}
+            {/* <Link
               to="/history"
               className={`transition-colors ${
                 isActive('/history')
@@ -60,28 +74,42 @@ export default function Navbar({ darkMode, toggleDarkMode, user, onLogout }) {
               }`}
             >
               History
-            </Link>
+            </Link> */}
 
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                  <User className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {user.name}
-                  </span>
-                </div>
-                <button
-                  onClick={onLogout}
-                  className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors ${
-                    darkMode
-                      ? 'text-red-400 hover:bg-red-900/30'
-                      : 'text-red-600 hover:bg-red-50'
+            {activeUser ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    isActive('/dashboard')
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                      : darkMode
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm font-medium">Logout</span>
-                </button>
-              </div>
+                  Dashboard
+                </Link>
+                <div className="flex items-center space-x-4">
+                  <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                    <User className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                    <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {activeUser.name || activeUser.email}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-colors ${
+                      darkMode
+                        ? 'text-red-400 hover:bg-red-900/30'
+                        : 'text-red-600 hover:bg-red-50'
+                    }`}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </div>
+              </>
             ) : (
               <Link
                 to="/login"

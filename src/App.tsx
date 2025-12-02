@@ -7,6 +7,8 @@ import Analyze from './pages/Analyze';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import History from './pages/History';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -49,10 +51,17 @@ function App() {
         />
         <Routes>
           <Route path="/" element={<Home darkMode={darkMode} />} />
-          <Route path="/analyze" element={<Analyze darkMode={darkMode} user={user} />} />
+          <Route path="/dashboard" element={<Dashboard darkMode={darkMode} />}> 
+            <Route path="analyze" element={<Analyze darkMode={darkMode} />} />
+            <Route path="history" element={<History darkMode={darkMode} />} />
+            <Route path="profile" element={<Profile darkMode={darkMode} />} />
+          </Route>
+          {/* Optional non-nested routes */}
+          <Route path="/analyze" element={<Analyze darkMode={darkMode} />} />
           <Route path="/login" element={<Login darkMode={darkMode} setUser={setUser} />} />
           <Route path="/signup" element={<Signup darkMode={darkMode} setUser={setUser} />} />
-          <Route path="/history" element={<History darkMode={darkMode} user={user} />} />
+          <Route path="/history" element={<History darkMode={darkMode} />} />
+          <Route path="/profile" element={<Profile darkMode={darkMode} />} />
         </Routes>
         <Footer darkMode={darkMode} />
       </div>

@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager
 from backend.config import Config
 from backend.models.database import init_db
 from backend.routes import auth_bp, analysis_bp, history_bp, admin_bp
+import os
 
 def create_app():
     app = Flask(__name__)
@@ -20,11 +21,16 @@ def create_app():
     
     @app.route('/health', methods=['GET'])
     def health_check():
-        return {'status': 'healthy', 'message': 'SafeText AI Backend is running'}
-    
-    with app.app_context():
-        init_db()
-    
+        return {'status': 'healthy', 'db_init': os.getenv('SKIP_DB_INIT') == '1', 'message': 'SafeText AI Backend running'}
+
+    if os.getenv('SKIP_DB_INIT') == '1':
+        print('Skipping database initialization (SKIP_DB_INIT=1).')
+    else:
+        try:
+            init_db()
+        except Exception as e:
+            print(f'Database initialization failed: {e}\nContinuing without DB. Set SKIP_DB_INIT=1 to suppress this attempt.')
+
     return app
 
 app = create_app()

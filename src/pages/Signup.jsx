@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus } from 'lucide-react';
-import { authAPI } from '../api/api';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 export default function Signup({ darkMode, setUser }) {
   const [name, setName] = useState('');
@@ -12,6 +12,7 @@ export default function Signup({ darkMode, setUser }) {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUpWithPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,22 +36,15 @@ export default function Signup({ darkMode, setUser }) {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await authAPI.signup({ name, email, password });
-      const { user, access_token } = response.data.data;
-      
-      localStorage.setItem('authToken', access_token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      if (setUser) setUser(user);
-      
-      setMessage({ type: 'success', text: 'Account created successfully! Redirecting...' });
+      const { data, error } = await signUpWithPassword(email, password);
+      if (error) throw error;
 
-      setTimeout(() => {
-        navigate('/analyze');
-      }, 1000);
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Registration failed. Please try again.';
-      setMessage({ type: 'error', text: errorMessage });
+      if (setUser) setUser(data?.user || null);
+      setMessage({ type: 'success', text: 'Account created! Redirecting...' });
+
+      setTimeout(() => navigate('/dashboard'), 800);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Registration failed. Please try again.' });
     } finally {
       setLoading(false);
     }

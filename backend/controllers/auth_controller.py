@@ -26,10 +26,10 @@ class AuthController:
             
             return format_response({
                 'user': {
-                    'id': user['id'],
-                    'name': user['name'],
-                    'email': user['email'],
-                    'role': user['role']
+                    'id': user.get('id'),
+                    'name': user.get('name'),
+                    'email': user.get('email'),
+                    'role': user.get('role')
                 },
                 'access_token': access_token
             }, 'User registered successfully', 201)
@@ -48,17 +48,17 @@ class AuthController:
         if not user:
             return format_error('Invalid email or password', 401)
         
-        if not User.verify_password(user['password_hash'], password):
+        if not User.verify_password(user.get('password_hash', ''), password):
             return format_error('Invalid email or password', 401)
         
         access_token = create_access_token(identity=str(user['id']))
         
         return format_response({
             'user': {
-                'id': user['id'],
-                'name': user['name'],
-                'email': user['email'],
-                'role': user['role']
+                'id': user.get('id'),
+                'name': user.get('name'),
+                'email': user.get('email'),
+                'role': user.get('role')
             },
             'access_token': access_token
         }, 'Login successful')
@@ -72,9 +72,9 @@ class AuthController:
             return format_error('User not found', 404)
         
         return format_response({
-            'id': user['id'],
-            'name': user['name'],
-            'email': user['email'],
-            'role': user['role'],
-            'created_at': user['created_at'].isoformat() if user['created_at'] else None
+            'id': user.get('id'),
+            'name': user.get('name'),
+            'email': user.get('email'),
+            'role': user.get('role'),
+            'created_at': user.get('created_at')
         })

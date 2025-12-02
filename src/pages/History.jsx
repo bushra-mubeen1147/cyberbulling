@@ -3,27 +3,29 @@ import { motion } from 'framer-motion';
 import { Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HistoryTable from '../components/HistoryTable';
-import { historyAPI } from '../api/api';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
-export default function History({ darkMode, user }) {
+export default function History({ darkMode }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   const fetchHistory = async () => {
-    const token = localStorage.getItem('authToken');
-    const storedUser = localStorage.getItem('user');
-    
-    if (!token || !storedUser) {
+    if (!user) {
       setLoading(false);
       setError('Please login to view your analysis history');
       return;
     }
-
     try {
-      const userData = JSON.parse(storedUser);
-      const response = await historyAPI.getByUserId(userData.id);
-      const historyData = response.data.data.map(item => ({
+      const { data, error: selectError } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (selectError) throw selectError;
+      const historyData = (data || []).map(item => ({
         id: item.id,
         text: item.input_text.substring(0, 50) + (item.input_text.length > 50 ? '...' : ''),
         fullText: item.input_text,
@@ -36,11 +38,7 @@ export default function History({ darkMode, user }) {
       setHistory(historyData);
       setError('');
     } catch (err) {
-      if (err.response?.status === 401) {
-        setError('Please login to view your analysis history');
-      } else {
-        setError('Failed to load history. Please try again.');
-      }
+      setError(err.message || 'Failed to load history. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,11 +46,15 @@ export default function History({ darkMode, user }) {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [user?.id]);
 
-  const handleDelete = (id) => {
-    const updatedHistory = history.filter(item => item.id !== id);
-    setHistory(updatedHistory);
+  const handleDelete = async (id) => {
+    try {
+      await supabase.from('analysis_history').delete().eq('id', id).eq('user_id', user.id);
+      setHistory(prev => prev.filter(item => item.id !== id));
+    } catch (err) {
+      console.error('Delete failed', err);
+    }
   };
 
   if (loading) {

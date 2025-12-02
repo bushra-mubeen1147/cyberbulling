@@ -3,15 +3,18 @@ import { motion } from 'framer-motion';
 import { Send, Save } from 'lucide-react';
 import Spinner from '../components/Spinner';
 import ResultCard from '../components/ResultCard';
-import { analysisAPI, historyAPI } from '../api/api';
+import { analysisAPI } from '../api/api';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
-export default function Analyze({ darkMode, user }) {
+export default function Analyze({ darkMode }) {
   const [text, setText] = useState('');
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   const handleAnalyze = async () => {
     if (!text.trim()) {
@@ -35,29 +38,29 @@ export default function Analyze({ darkMode, user }) {
 
   const handleSave = async () => {
     if (!result) return;
-
-    const token = localStorage.getItem('authToken');
-    if (!token) {
+    if (!user) {
       setError('Please login to save your analysis history');
       return;
     }
-
     try {
-      await historyAPI.add({
-        text: text,
-        toxicity_score: result.toxicity_score,
-        cyberbullying_prob: result.cyberbullying_prob,
-        sarcasm: result.sarcasm,
-        sentiment: result.sentiment
-      });
+      const { error: insertError } = await supabase
+        .from('analysis_history')
+        .insert({
+          user_id: user.id,
+          input_text: text,
+          toxicity_score: result.toxicity_score,
+          cyberbullying_prob: result.cyberbullying_prob,
+          result_sarcasm: result.sarcasm,
+          sentiment: result.sentiment,
+          tweet_url: url || null,
+          created_at: new Date().toISOString(),
+        });
+      if (insertError) throw insertError;
+      setError('');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      if (err.response?.status === 401) {
-        setError('Please login to save your analysis history');
-      } else {
-        setError('Failed to save. Please try again.');
-      }
+      setError(err.message || 'Failed to save. Please try again.');
     }
   };
 

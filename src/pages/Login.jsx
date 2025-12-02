@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
-import { authAPI } from '../api/api';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 export default function Login({ darkMode, setUser }) {
   const [email, setEmail] = useState('');
@@ -10,6 +10,7 @@ export default function Login({ darkMode, setUser }) {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signInWithPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,22 +29,14 @@ export default function Login({ darkMode, setUser }) {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await authAPI.login({ email, password });
-      const { user, access_token } = response.data.data;
-      
-      localStorage.setItem('authToken', access_token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      if (setUser) setUser(user);
-      
+      const { data, error } = await signInWithPassword(email, password);
+      if (error) throw error;
+      if (setUser) setUser(data?.user || null);
       setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
 
-      setTimeout(() => {
-        navigate('/analyze');
-      }, 1000);
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Login failed. Please try again.';
-      setMessage({ type: 'error', text: errorMessage });
+      setTimeout(() => navigate('/dashboard'), 800);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Login failed. Please try again.' });
     } finally {
       setLoading(false);
     }
