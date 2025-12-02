@@ -3,8 +3,8 @@ import { Shield, Github, Twitter, Linkedin } from 'lucide-react';
 export default function Footer({ darkMode }) {
   return (
     <footer className={`${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-t ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Shield className="w-6 h-6 text-blue-600" />
@@ -26,13 +26,18 @@ export default function Footer({ darkMode }) {
                 </a>
               </li>
               <li>
-                <a href="/analyze" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-blue-600'} transition-colors text-sm`}>
-                  Analyze Text
+                <a href="/about" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-blue-600'} transition-colors text-sm`}>
+                  About
                 </a>
               </li>
               <li>
-                <a href="/history" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-blue-600'} transition-colors text-sm`}>
-                  History
+                <a href="/services" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-blue-600'} transition-colors text-sm`}>
+                  Services
+                </a>
+              </li>
+              <li>
+                <a href="/contact" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-blue-600'} transition-colors text-sm`}>
+                  Contact
                 </a>
               </li>
             </ul>

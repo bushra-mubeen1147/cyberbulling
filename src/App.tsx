@@ -9,6 +9,9 @@ import Signup from './pages/Signup';
 import History from './pages/History';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile.jsx';
+import About from './pages/About.jsx';
+import Services from './pages/Services.jsx';
+import Contact from './pages/Contact.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -51,6 +54,9 @@ function App() {
         />
         <Routes>
           <Route path="/" element={<Home darkMode={darkMode} />} />
+          <Route path="/about" element={<About darkMode={darkMode} />} />
+          <Route path="/services" element={<Services darkMode={darkMode} />} />
+          <Route path="/contact" element={<Contact darkMode={darkMode} />} />
           <Route path="/dashboard" element={<Dashboard darkMode={darkMode} />}> 
             <Route path="analyze" element={<Analyze darkMode={darkMode} />} />
             <Route path="history" element={<History darkMode={darkMode} />} />
