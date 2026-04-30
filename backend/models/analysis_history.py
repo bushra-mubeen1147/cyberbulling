@@ -1,4 +1,4 @@
-from backend.models.database import get_db_connection
+from database.connection import get_db_connection
 from datetime import datetime
 
 class AnalysisHistory:

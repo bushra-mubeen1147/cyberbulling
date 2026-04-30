@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from backend.config import Config
-from backend.models.database import init_db
+from database.connection import init_db
 from backend.routes import auth_bp, analysis_bp, history_bp, admin_bp
 import os
 
