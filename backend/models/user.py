@@ -2,6 +2,9 @@ from datetime import datetime
 import os
 import bcrypt
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SUPABASE_URL = os.getenv('SUPABASE_URL')  # e.g. https://xxxxx.supabase.co
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')  # public anon key
