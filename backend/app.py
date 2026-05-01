@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from backend.config import Config
 from database.connection import init_db
-from backend.routes import auth_bp, analysis_bp, history_bp, admin_bp
+from backend.routes import auth_bp, analysis_bp, history_bp, admin_bp, activity_bp
 import os
 
 def create_app():
@@ -18,6 +18,7 @@ def create_app():
     app.register_blueprint(analysis_bp)
     app.register_blueprint(history_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(activity_bp)
     
     @app.route('/health', methods=['GET'])
     def health_check():

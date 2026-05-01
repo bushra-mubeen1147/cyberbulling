@@ -11,7 +11,16 @@ import {
   LogOut,
   ChevronRight,
   Sparkles,
-  Shield
+  Shield,
+  BarChart3,
+  AlertTriangle,
+  LifeBuoy,
+  Activity,
+  TrendingUp,
+  Key,
+  Eye,
+  Database,
+  Download
 } from 'lucide-react';
 import { useState } from 'react';
 import DashboardSidebar from '../components/DashboardSidebar.jsx';
@@ -42,10 +51,85 @@ export default function Dashboard({ darkMode }) {
       requiresAuth: true
     },
     {
+      path: '/dashboard/statistics',
+      icon: BarChart3,
+      label: 'Statistics',
+      description: 'View analytics',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/reports',
+      icon: FileText,
+      label: 'Reports',
+      description: 'Generate reports',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/alerts',
+      icon: AlertTriangle,
+      label: 'Alerts',
+      description: 'View warnings',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/activity',
+      icon: Activity,
+      label: 'Activity Feed',
+      description: 'Recent events',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/trending',
+      icon: TrendingUp,
+      label: 'Trending Topics',
+      description: 'Top patterns',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/api',
+      icon: Key,
+      label: 'API Management',
+      description: 'Manage keys',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/review',
+      icon: Eye,
+      label: 'Content Review',
+      description: 'Manual review',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/search',
+      icon: Search,
+      label: 'Advanced Search',
+      description: 'Find content',
+      requiresAuth: true
+    },
+    {
+      path: '/dashboard/export',
+      icon: Download,
+      label: 'Data Export',
+      description: 'Export data',
+      requiresAuth: true
+    },
+    {
       path: '/dashboard/profile',
       icon: User,
       label: 'Profile Settings',
       description: 'Manage account'
+    },
+    {
+      path: '/dashboard/settings',
+      icon: Settings,
+      label: 'Dashboard Settings',
+      description: 'Customize app'
+    },
+    {
+      path: '/dashboard/support',
+      icon: LifeBuoy,
+      label: 'Support',
+      description: 'Get help'
     }
   ];
 

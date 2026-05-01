@@ -186,8 +186,9 @@ Regular users can register via the `/signup` page.
 
 ---
 
-## Key Pages
+## Key Pages & Dashboard Tabs
 
+### Public Pages
 | Route          | Page             | Access       |
 |----------------|------------------|--------------|
 | /              | Home             | Public       |
@@ -196,8 +197,55 @@ Regular users can register via the `/signup` page.
 | /contact       | Contact          | Public       |
 | /login         | Login            | Public       |
 | /signup        | Sign Up          | Public       |
-| /dashboard     | User Dashboard   | Logged in    |
+
+### Dashboard (14 Tabs)
+| Route                    | Page                  | Description                    |
+|--------------------------|-----------------------|--------------------------------|
+| /dashboard/analyze       | Analyze Text         | Check content for toxicity     |
+| /dashboard/history      | Analysis History     | View past analysis results     |
+| /dashboard/statistics   | Statistics           | Analytics & metrics dashboard |
+| /dashboard/reports      | Reports              | Generate analysis reports     |
+| /dashboard/alerts       | Alerts & Warnings    | Monitor detected threats       |
+| /dashboard/activity    | Activity Feed        | Real-time activity timeline    |
+| /dashboard/trending     | Trending Topics      | Top harmful patterns          |
+| /dashboard/api          | API Management       | Manage API keys                |
+| /dashboard/review      | Content Review       | Manual content moderation      |
+| /dashboard/search       | Advanced Search      | Search & filter content        |
+| /dashboard/export      | Data Export          | Export data (CSV/JSON/Excel)  |
+| /dashboard/profile     | Profile Settings     | Manage account                 |
+| /dashboard/settings   | Dashboard Settings   | Customize preferences          |
+| /dashboard/support     | Support              | Help & feedback                |
+
+### Admin
+| Route          | Page             | Access       |
+|----------------|------------------|--------------|
 | /admin         | Admin Panel      | Admin only   |
+
+---
+
+## Dashboard Features
+
+### Core Analysis
+- **Analyze Text** — Real-time AI-powered toxicity detection
+- **Analysis History** — Browse and manage past analysis results
+
+### Analytics & Insights
+- **Statistics** — Comprehensive metrics with time range filters
+- **Reports** — Generate weekly/monthly/custom reports
+- **Alerts** — Monitor critical threats and warnings
+- **Activity Feed** — Real-time timeline of all system events
+- **Trending Topics** — Track most common harmful patterns
+
+### Developer Tools
+- **API Management** — Create and manage API keys for integrations
+- **Advanced Search** — Powerful search with filters and export
+- **Data Export** — Export data in CSV, JSON, or Excel format
+
+### User Management
+- **Content Review** — Manual moderation queue for flagged content
+- **Profile Settings** — Account management and preferences
+- **Dashboard Settings** — Notification and privacy preferences
+- **Support** — FAQ, feedback submission, and resources
 
 ---
 

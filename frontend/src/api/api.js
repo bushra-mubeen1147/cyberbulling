@@ -49,4 +49,9 @@ export const adminAPI = {
   deleteUser: (userId) => api.delete(`/admin/user/${userId}`),
 };
 
+export const activityAPI = {
+  getActivities: (userId) => api.get(`/activity/${userId}`),
+  logActivity: (data) => api.post('/activity/log', data),
+};
+
 export default api;

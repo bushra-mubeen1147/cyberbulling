@@ -13,6 +13,17 @@ import About from './pages/About.jsx';
 import Services from './pages/Services.jsx';
 import Contact from './pages/Contact.jsx';
 import Admin from './pages/Admin.jsx';
+import Statistics from './pages/Statistics.jsx';
+import Reports from './pages/Reports.jsx';
+import Alerts from './pages/Alerts.jsx';
+import DashboardSettings from './pages/DashboardSettings.jsx';
+import Support from './pages/Support.jsx';
+import ActivityFeed from './pages/ActivityFeed.jsx';
+import TrendingTopics from './pages/TrendingTopics.jsx';
+import APIManagement from './pages/APIManagement.jsx';
+import ContentReview from './pages/ContentReview.jsx';
+import AdvancedSearch from './pages/AdvancedSearch.jsx';
+import DataExport from './pages/DataExport.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -62,6 +73,17 @@ function App() {
             <Route path="analyze" element={<Analyze darkMode={darkMode} />} />
             <Route path="history" element={<History darkMode={darkMode} />} />
             <Route path="profile" element={<Profile darkMode={darkMode} />} />
+            <Route path="statistics" element={<Statistics darkMode={darkMode} />} />
+            <Route path="reports" element={<Reports darkMode={darkMode} />} />
+            <Route path="alerts" element={<Alerts darkMode={darkMode} />} />
+            <Route path="settings" element={<DashboardSettings darkMode={darkMode} />} />
+            <Route path="support" element={<Support darkMode={darkMode} />} />
+            <Route path="activity" element={<ActivityFeed darkMode={darkMode} />} />
+            <Route path="trending" element={<TrendingTopics darkMode={darkMode} />} />
+            <Route path="api" element={<APIManagement darkMode={darkMode} />} />
+            <Route path="review" element={<ContentReview darkMode={darkMode} />} />
+            <Route path="search" element={<AdvancedSearch darkMode={darkMode} />} />
+            <Route path="export" element={<DataExport darkMode={darkMode} />} />
           </Route>
           <Route path="/admin" element={<Admin darkMode={darkMode} />} />
           {/* Optional non-nested routes */}
