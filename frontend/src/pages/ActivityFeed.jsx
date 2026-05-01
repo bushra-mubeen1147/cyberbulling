@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Activity,
   TrendingUp,
@@ -8,57 +8,104 @@ import {
   Filter,
   Eye
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function ActivityFeed({ darkMode }) {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      type: 'analysis',
-      title: 'Text Analysis Completed',
-      description: 'Analyzed "Check this out" - Toxicity: 15%',
-      timestamp: '5 mins ago',
-      icon: MessageSquare,
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 2,
-      type: 'alert',
-      title: 'High Risk Content Detected',
-      description: 'Severe cyberbullying pattern detected',
-      timestamp: '2 hours ago',
-      icon: AlertTriangle,
-      color: 'from-red-500 to-red-600'
-    },
-    {
-      id: 3,
-      type: 'report',
-      title: 'Weekly Report Generated',
-      description: '1,247 analyses completed - 89 toxic detected',
-      timestamp: '1 day ago',
-      icon: TrendingUp,
-      color: 'from-green-500 to-green-600'
-    },
-    {
-      id: 4,
-      type: 'analysis',
-      title: 'Batch Analysis Complete',
-      description: '50 texts processed - 4 critical findings',
-      timestamp: '2 days ago',
-      icon: MessageSquare,
-      color: 'from-purple-500 to-purple-600'
-    },
-    {
-      id: 5,
-      type: 'settings',
-      title: 'Settings Updated',
-      description: 'Notification preferences changed',
-      timestamp: '3 days ago',
-      icon: Activity,
-      color: 'from-yellow-500 to-yellow-600'
-    }
-  ]);
-
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const { user } = useAuth();
+
+  const fetchActivities = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Transform history data into activities
+      const transformedActivities = (data || []).map((item, idx) => {
+        const isToxic = item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5;
+        const isHighRisk = item.toxicity_score > 0.7 || item.cyberbullying_prob > 0.7;
+        
+        let type = 'analysis';
+        let title = 'Text Analysis Completed';
+        let description = `Analyzed "${item.input_text.substring(0, 30)}${item.input_text.length > 30 ? '...' : ''}"`;
+        let icon = MessageSquare;
+        let color = 'from-blue-500 to-blue-600';
+
+        if (isHighRisk) {
+          type = 'alert';
+          title = 'High Risk Content Detected';
+          description = `Severe pattern detected - Toxicity: ${(item.toxicity_score * 100).toFixed(0)}%`;
+          icon = AlertTriangle;
+          color = 'from-red-500 to-red-600';
+        } else if (isToxic) {
+          type = 'alert';
+          title = 'Toxic Content Found';
+          description = `Content flagged - Toxicity: ${(item.toxicity_score * 100).toFixed(0)}%`;
+          icon = AlertTriangle;
+          color = 'from-orange-500 to-orange-600';
+        } else {
+          type = 'analysis';
+          title = 'Safe Content Analyzed';
+          description = `Content analyzed - Toxicity: ${(item.toxicity_score * 100).toFixed(0)}%`;
+          icon = MessageSquare;
+          color = 'from-green-500 to-green-600';
+        }
+
+        return {
+          id: item.id,
+          type,
+          title,
+          description,
+          timestamp: getRelativeTime(item.created_at),
+          icon,
+          color,
+          rawData: item
+        };
+      });
+
+      setActivities(transformedActivities);
+
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, [user?.id]);
 
   const filteredActivities = activities.filter(activity => {
     if (filter === 'all') return true;

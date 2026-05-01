@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   TrendingUp,
   BarChart3,
@@ -8,66 +8,126 @@ import {
   Share2,
   Info
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function TrendingTopics({ darkMode }) {
   const [timeRange, setTimeRange] = useState('week');
+  const [loading, setLoading] = useState(true);
+  const [trendingPatterns, setTrendingPatterns] = useState([]);
+  const { user } = useAuth();
 
-  const trendingPatterns = [
-    {
-      id: 1,
-      pattern: 'Name-calling & insults',
-      detections: 234,
-      severity: 'high',
-      trend: '+12%',
-      keywords: ['loser', 'stupid', 'idiot', 'dummy'],
-      category: 'Cyberbullying'
-    },
-    {
-      id: 2,
-      pattern: 'Exclusion & isolation',
-      detections: 189,
-      severity: 'high',
-      trend: '+8%',
-      keywords: ['alone', 'nobody likes', 'outcast', 'freak'],
-      category: 'Harassment'
-    },
-    {
-      id: 3,
-      pattern: 'Accusations & false rumors',
-      detections: 156,
-      severity: 'medium',
-      trend: '+5%',
-      keywords: ['liar', 'fake', 'rumor', 'spread'],
-      category: 'Harassment'
-    },
-    {
-      id: 4,
-      pattern: 'Threats & intimidation',
-      detections: 143,
-      severity: 'critical',
-      trend: '+3%',
-      keywords: ['threat', 'watch', 'careful', 'danger'],
-      category: 'Threats'
-    },
-    {
-      id: 5,
-      pattern: 'Sexual harassment content',
-      detections: 98,
-      severity: 'critical',
-      trend: '-2%',
-      keywords: ['inappropriate', 'harassment', 'unwanted'],
-      category: 'Sexual Harassment'
-    },
-    {
-      id: 6,
-      pattern: 'Hate speech & discrimination',
-      detections: 67,
-      severity: 'critical',
-      trend: '+1%',
-      keywords: ['hate', 'prejudice', 'discriminate'],
-      category: 'Hate Speech'
+  const fetchTrendingTopics = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  ];
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Analyze patterns from user's history
+      const patterns = {
+        'Cyberbullying': { detections: 0, severity: 'low', keywords: ['hate', 'stupid', 'idiot', 'loser'] },
+        'Harassment': { detections: 0, severity: 'low', keywords: ['annoying', 'shut up', 'go away'] },
+        'Threats': { detections: 0, severity: 'low', keywords: ['die', 'kill', 'threat'] },
+        'Hate Speech': { detections: 0, severity: 'low', keywords: ['worst', 'terrible', 'pathetic'] }
+      };
+
+      (data || []).forEach(item => {
+        const text = (item.input_text || '').toLowerCase();
+        
+        // Check for patterns
+        if (item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5) {
+          if (text.includes('hate') || text.includes('stupid') || text.includes('idiot')) {
+            patterns['Cyberbullying'].detections++;
+          }
+          if (text.includes('annoying') || text.includes('shut')) {
+            patterns['Harassment'].detections++;
+          }
+          if (text.includes('die') || text.includes('kill') || text.includes('threat')) {
+            patterns['Threats'].detections++;
+          }
+          if (text.includes('worst') || text.includes('terrible')) {
+            patterns['Hate Speech'].detections++;
+          }
+        }
+      });
+
+      // Determine severity based on counts
+      Object.keys(patterns).forEach(key => {
+        const count = patterns[key].detections;
+        if (count > 10) patterns[key].severity = 'critical';
+        else if (count > 5) patterns[key].severity = 'high';
+        else if (count > 2) patterns[key].severity = 'medium';
+        else patterns[key].severity = 'low';
+      });
+
+      // Convert to array
+      const trends = Object.entries(patterns).map(([pattern, data], idx) => ({
+        id: idx + 1,
+        pattern,
+        detections: data.detections,
+        severity: data.severity,
+        trend: data.detections > 0 ? '+5%' : '0%',
+        keywords: data.keywords,
+        category: pattern
+      })).sort((a, b) => b.detections - a.detections);
+
+      // If no data, show default patterns
+      if (trends.every(t => t.detections === 0)) {
+        setTrendingPatterns([
+          {
+            id: 1,
+            pattern: 'Name-calling & insults',
+            detections: 0,
+            severity: 'low',
+            trend: '0%',
+            keywords: ['loser', 'stupid', 'idiot', 'dummy'],
+            category: 'Cyberbullying'
+          },
+          {
+            id: 2,
+            pattern: 'Exclusion & isolation',
+            detections: 0,
+            severity: 'low',
+            trend: '0%',
+            keywords: ['alone', 'nobody likes', 'outcast', 'freak'],
+            category: 'Harassment'
+          },
+          {
+            id: 3,
+            pattern: 'Threats & intimidation',
+            detections: 0,
+            severity: 'low',
+            trend: '0%',
+            keywords: ['threat', 'watch', 'careful', 'danger'],
+            category: 'Threats'
+          }
+        ]);
+      } else {
+        setTrendingPatterns(trends);
+      }
+
+    } catch (err) {
+      console.error('Failed to fetch trending topics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrendingTopics();
+  }, [user?.id]);
 
   const getSeverityColor = (severity) => {
     switch(severity) {

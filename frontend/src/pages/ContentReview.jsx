@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ClipboardList,
   AlertTriangle,
@@ -11,53 +11,98 @@ import {
   XCircle,
   Flag
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function ContentReview({ darkMode }) {
-  const [queue, setQueue] = useState([
-    {
-      id: 1,
-      text: 'You are so stupid and worthless',
-      severity: 'critical',
-      flaggedBy: 'System',
-      timestamp: '5 mins ago',
-      reason: 'Severe cyberbullying detected',
-      confidence: 98,
-      status: 'pending'
-    },
-    {
-      id: 2,
-      text: 'Nobody likes you, go away',
-      severity: 'high',
-      flaggedBy: 'System',
-      timestamp: '15 mins ago',
-      reason: 'Harassment and exclusion',
-      confidence: 95,
-      status: 'pending'
-    },
-    {
-      id: 3,
-      text: 'This is so annoying, fix your app',
-      severity: 'low',
-      flaggedBy: 'System',
-      timestamp: '1 hour ago',
-      reason: 'Potential false positive - mild complaint',
-      confidence: 45,
-      status: 'pending'
-    },
-    {
-      id: 4,
-      text: 'You make terrible decisions',
-      severity: 'medium',
-      flaggedBy: 'System',
-      timestamp: '2 hours ago',
-      reason: 'Harsh criticism',
-      confidence: 72,
-      status: 'pending'
-    }
-  ]);
-
+  const [queue, setQueue] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [selectedItem, setSelectedItem] = useState(null);
+  const { user } = useAuth();
+
+  const fetchQueue = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Transform into review items
+      const items = (data || []).map((item, idx) => {
+        const toxicity = item.toxicity_score || 0;
+        const cyberbullying = item.cyberbullying_prob || 0;
+        const maxScore = Math.max(toxicity, cyberbullying);
+        
+        let severity = 'low';
+        let reason = 'Content analyzed';
+        let confidence = Math.round((1 - maxScore) * 100);
+        
+        if (maxScore > 0.7) {
+          severity = 'critical';
+          reason = 'Severe cyberbullying detected';
+          confidence = Math.round(maxScore * 100);
+        } else if (maxScore > 0.5) {
+          severity = 'high';
+          reason = 'Harassment and exclusion detected';
+          confidence = Math.round(maxScore * 100);
+        } else if (maxScore > 0.3) {
+          severity = 'medium';
+          reason = 'Potentially harmful content';
+          confidence = Math.round(maxScore * 100);
+        }
+
+        return {
+          id: item.id,
+          text: item.input_text,
+          severity,
+          flaggedBy: 'System',
+          timestamp: getRelativeTime(item.created_at),
+          reason,
+          confidence,
+          status: 'pending'
+        };
+      });
+
+      setQueue(items);
+
+    } catch (err) {
+      console.error('Failed to fetch queue:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  useEffect(() => {
+    fetchQueue();
+  }, [user?.id]);
 
   const handleApprove = (id) => {
     setQueue(queue.map(item => 

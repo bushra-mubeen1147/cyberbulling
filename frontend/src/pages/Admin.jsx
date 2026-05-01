@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
@@ -12,40 +12,92 @@ import {
   Eye,
   Ban
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function Admin({ darkMode }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    flaggedContent: 0,
+    totalAnalysis: 0,
+    reports: 0
+  });
+  const [flaggedContent, setFlaggedContent] = useState([]);
+  const [recentUsers, setRecentUsers] = useState([]);
+  const { user } = useAuth();
 
-  // Mock data
-  const stats = [
-    { label: 'Total Users', value: '12,847', change: '+12%', icon: Users, color: 'blue' },
-    { label: 'Flagged Content', value: '2,341', change: '+8%', icon: AlertTriangle, color: 'red' },
-    { label: 'Total Analysis', value: '45,923', change: '+24%', icon: BarChart3, color: 'purple' },
-    { label: 'Reports', value: '573', change: '+5%', icon: FileText, color: 'orange' },
-  ];
+  const fetchAdminData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-  const flaggedContent = [
-    { id: 1, user: 'user@example.com', text: 'This is extremely offensive content...', toxicity: 95, severity: 'High', date: '2025-12-02 10:30 AM' },
-    { id: 2, user: 'another@example.com', text: 'Stop being so stupid and annoying...', toxicity: 87, severity: 'High', date: '2025-12-02 09:15 AM' },
-    { id: 3, user: 'test@example.com', text: 'You are such a loser and nobody likes you...', toxicity: 92, severity: 'High', date: '2025-12-01 11:45 PM' },
-    { id: 4, user: 'sample@example.com', text: 'This is inappropriate and harmful...', toxicity: 78, severity: 'Medium', date: '2025-12-01 08:20 PM' },
-    { id: 5, user: 'demo@example.com', text: 'Rude and disrespectful behavior...', toxicity: 71, severity: 'Medium', date: '2025-12-01 06:30 PM' },
-  ];
+    try {
+      setLoading(true);
+      
+      // Fetch all history for stats
+      const { data: historyData, error: historyError } = await supabase
+        .from('analysis_history')
+        .select('*');
 
-  const recentUsers = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', analyses: 45, joined: '2025-11-15', status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', analyses: 32, joined: '2025-11-20', status: 'Active' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', analyses: 18, joined: '2025-11-25', status: 'Active' },
-    { id: 4, name: 'Alice Williams', email: 'alice@example.com', analyses: 67, joined: '2025-10-30', status: 'Active' },
-    { id: 5, name: 'Charlie Brown', email: 'charlie@example.com', analyses: 12, joined: '2025-11-28', status: 'Suspended' },
-  ];
+      if (historyError) throw historyError;
 
-  const reports = [
-    { id: 1, reporter: 'user1@example.com', type: 'Harassment', description: 'Repeated bullying behavior', date: '2025-12-02', status: 'Pending' },
-    { id: 2, reporter: 'user2@example.com', type: 'Hate Speech', description: 'Offensive language targeting group', date: '2025-12-01', status: 'Under Review' },
-    { id: 3, reporter: 'user3@example.com', type: 'Spam', description: 'Multiple unwanted messages', date: '2025-12-01', status: 'Resolved' },
-    { id: 4, reporter: 'user4@example.com', type: 'Cyberbullying', description: 'Intimidating messages', date: '2025-11-30', status: 'Pending' },
-  ];
+      // Calculate stats
+      const totalAnalysis = (historyData || []).length;
+      const flaggedContentCount = (historyData || []).filter(item => 
+        item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5
+      ).length;
+
+      setStats({
+        totalUsers: 1, // For now, just the current user
+        flaggedContent: flaggedContentCount,
+        totalAnalysis: totalAnalysis,
+        reports: flaggedContentCount
+      });
+
+      // Get flagged content
+      const flagged = (historyData || [])
+        .filter(item => item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5)
+        .slice(0, 5)
+        .map(item => ({
+          id: item.id,
+          user: user.email,
+          text: item.input_text.substring(0, 50) + '...',
+          toxicity: Math.round((item.toxicity_score || 0) * 100),
+          severity: item.toxicity_score > 0.7 ? 'High' : 'Medium',
+          date: new Date(item.created_at).toLocaleString()
+        }));
+
+      setFlaggedContent(flagged.length > 0 ? flagged : [{
+        id: 1,
+        user: 'No data',
+        text: 'No flagged content yet',
+        toxicity: 0,
+        severity: 'Low',
+        date: new Date().toLocaleString()
+      }]);
+
+      setRecentUsers([{
+        id: user.id,
+        name: user.email.split('@')[0],
+        email: user.email,
+        analyses: totalAnalysis,
+        joined: new Date().toISOString().split('T')[0],
+        status: 'Active'
+      }]);
+
+    } catch (err) {
+      console.error('Failed to fetch admin data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminData();
+  }, [user?.id]);
 
   const getSeverityColor = (severity) => {
     if (severity === 'High') return 'text-red-600 bg-red-100 dark:bg-red-900/30';

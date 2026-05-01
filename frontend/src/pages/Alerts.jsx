@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Bell,
   AlertTriangle,
@@ -10,58 +10,108 @@ import {
   Shield,
   Clock
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function Alerts({ darkMode }) {
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      type: 'high',
-      title: 'Critical Threat Detected',
-      description: 'Severe cyberbullying content detected in analysis',
-      timestamp: '2 hours ago',
-      source: 'User Input',
-      read: false,
-      severity: 'Critical'
-    },
-    {
-      id: 2,
-      type: 'medium',
-      title: 'Potential Harassment',
-      description: 'Harassing language pattern detected',
-      timestamp: '5 hours ago',
-      source: 'API Analysis',
-      read: false,
-      severity: 'High'
-    },
-    {
-      id: 3,
-      type: 'low',
-      title: 'Sarcasm Detected',
-      description: 'Sarcastic content flag - may require manual review',
-      timestamp: '1 day ago',
-      source: 'Automated',
-      read: true,
-      severity: 'Low'
-    },
-    {
-      id: 4,
-      type: 'medium',
-      title: 'Hate Speech Keywords',
-      description: 'Content containing potentially harmful keywords',
-      timestamp: '2 days ago',
-      source: 'User Input',
-      read: true,
-      severity: 'High'
-    }
-  ]);
-
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [viewMode, setViewMode] = useState('unread');
+  const { user } = useAuth();
+
+  const fetchAlerts = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Transform history into alerts based on toxicity scores
+      const transformedAlerts = (data || []).map((item, idx) => {
+        const toxicity = item.toxicity_score || 0;
+        const cyberbullying = item.cyberbullying_prob || 0;
+        const maxScore = Math.max(toxicity, cyberbullying);
+        
+        let type = 'low';
+        let severity = 'Low';
+        let title = 'Content Analyzed';
+        let description = `Text analyzed - Toxicity: ${(toxicity * 100).toFixed(0)}%`;
+        
+        if (maxScore > 0.7) {
+          type = 'high';
+          severity = 'Critical';
+          title = 'Critical Threat Detected';
+          description = `Severe cyberbullying content detected - Toxicity: ${(toxicity * 100).toFixed(0)}%`;
+        } else if (maxScore > 0.5) {
+          type = 'medium';
+          severity = 'High';
+          title = 'Potential Harmful Content';
+          description = `Content flagged - Toxicity: ${(toxicity * 100).toFixed(0)}%`;
+        } else if (item.sentiment === 'negative') {
+          type = 'low';
+          severity = 'Low';
+          title = 'Negative Sentiment Detected';
+          description = `Content with negative sentiment - may require review`;
+        }
+
+        return {
+          id: item.id,
+          type,
+          title,
+          description,
+          timestamp: getRelativeTime(item.created_at),
+          source: 'User Input',
+          read: idx > 2, // Mark older ones as read
+          severity,
+          rawData: item
+        };
+      }).filter(a => a.type !== 'low' || a.severity === 'Low'); // Show all but filter low by default
+
+      setAlerts(transformedAlerts);
+
+    } catch (err) {
+      console.error('Failed to fetch alerts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [user?.id]);
 
   const filteredAlerts = alerts.filter(alert => {
     if (filter === 'unread') return !alert.read;
     if (filter === 'critical') return alert.type === 'high';
-    if (filter === 'archived') return false; // For demo
+    if (filter === 'archived') return false;
     return true;
   });
 

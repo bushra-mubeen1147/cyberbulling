@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FileText,
   Calendar,
@@ -8,40 +8,86 @@ import {
   Plus,
   Filter
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function Reports({ darkMode }) {
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      title: 'Weekly Safety Report',
-      date: '2024-04-28',
-      type: 'Weekly',
-      status: 'Generated',
-      stats: '1,247 analyses, 89 toxic',
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 2,
-      title: 'Monthly Toxicity Analysis',
-      date: '2024-04-20',
-      type: 'Monthly',
-      status: 'Generated',
-      stats: '4,891 analyses, 312 toxic',
-      color: 'from-purple-500 to-purple-600'
-    },
-    {
-      id: 3,
-      title: 'Custom Analysis Report',
-      date: '2024-04-15',
-      type: 'Custom',
-      status: 'Generated',
-      stats: '456 analyses, 34 toxic',
-      color: 'from-green-500 to-green-600'
-    }
-  ]);
-
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
+
+  const fetchReports = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group by date to create reports
+      const reportsMap = {};
+      (data || []).forEach(item => {
+        const date = new Date(item.created_at);
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        const weekKey = weekStart.toISOString().split('T')[0];
+        
+        if (!reportsMap[weekKey]) {
+          reportsMap[weekKey] = {
+            id: weekKey,
+            title: `Weekly Safety Report`,
+            date: weekKey,
+            type: 'Weekly',
+            status: 'Generated',
+            stats: { total: 0, toxic: 0 },
+            color: 'from-blue-500 to-blue-600'
+          };
+        }
+        
+        reportsMap[weekKey].stats.total++;
+        if (item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5) {
+          reportsMap[weekKey].stats.toxic++;
+        }
+      });
+
+      // Convert to array and format
+      const formattedReports = Object.values(reportsMap).map(r => ({
+        ...r,
+        stats: `${r.stats.total} analyses, ${r.stats.toxic} toxic`
+      })).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      setReports(formattedReports.length > 0 ? formattedReports : [{
+        id: 1,
+        title: 'No Reports Yet',
+        date: new Date().toISOString().split('T')[0],
+        type: 'Weekly',
+        status: 'No Data',
+        stats: '0 analyses, 0 toxic',
+        color: 'from-gray-500 to-gray-600'
+      }]);
+
+    } catch (err) {
+      console.error('Failed to fetch reports:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, [user?.id]);
 
   const handleDelete = (id) => {
     setReports(reports.filter(r => r.id !== id));

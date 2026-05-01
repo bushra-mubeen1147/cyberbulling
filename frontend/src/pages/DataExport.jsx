@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Download,
   FileJson,
@@ -10,38 +10,12 @@ import {
   Clock,
   Copy
 } from 'lucide-react';
+import { useAuth } from '../context/AuthProvider.jsx';
+import { supabase } from '../lib/supabase.js';
 
 export default function DataExport({ darkMode }) {
-  const [exportJobs, setExportJobs] = useState([
-    {
-      id: 1,
-      name: 'Monthly Analysis Report 2024',
-      format: 'CSV',
-      created: '2024-04-28',
-      status: 'completed',
-      size: '2.4 MB',
-      records: 1247
-    },
-    {
-      id: 2,
-      name: 'Toxicity Trends April',
-      format: 'JSON',
-      created: '2024-04-27',
-      status: 'completed',
-      size: '1.8 MB',
-      records: 890
-    },
-    {
-      id: 3,
-      name: 'User Analysis History',
-      format: 'Excel',
-      created: '2024-04-26',
-      status: 'completed',
-      size: '3.2 MB',
-      records: 2156
-    }
-  ]);
-
+  const [exportJobs, setExportJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportConfig, setExportConfig] = useState({
     name: '',
@@ -49,11 +23,78 @@ export default function DataExport({ darkMode }) {
     dataType: 'all',
     dateRange: 'all'
   });
+  const { user } = useAuth();
+
+  const fetchExportJobs = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch history from Supabase
+      const { data, error } = await supabase
+        .from('analysis_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group by month to create export jobs
+      const jobsMap = {};
+      (data || []).forEach(item => {
+        const date = new Date(item.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!jobsMap[monthKey]) {
+          jobsMap[monthKey] = {
+            id: monthKey,
+            name: `Analysis Report ${monthKey}`,
+            format: 'CSV',
+            created: `${monthKey}-01`,
+            status: 'completed',
+            size: '-',
+            records: 0
+          };
+        }
+        
+        jobsMap[monthKey].records++;
+      });
+
+      // Convert to array
+      const jobs = Object.values(jobsMap).map(job => ({
+        ...job,
+        size: `${(job.records * 0.002).toFixed(1)} MB` // Estimate size
+      })).sort((a, b) => new Date(b.created) - new Date(a.created));
+
+      setExportJobs(jobs.length > 0 ? jobs : [{
+        id: 1,
+        name: 'No exports yet',
+        format: 'CSV',
+        created: new Date().toISOString().split('T')[0],
+        status: 'completed',
+        size: '0 MB',
+        records: 0
+      }]);
+
+    } catch (err) {
+      console.error('Failed to fetch export jobs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExportJobs();
+  }, [user?.id]);
 
   const handleCreateExport = () => {
     if (exportConfig.name.trim()) {
       const newExport = {
-        id: exportJobs.length + 1,
+        id: Date.now(),
         name: exportConfig.name,
         format: exportConfig.format.toUpperCase(),
         created: new Date().toISOString().split('T')[0],
