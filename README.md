@@ -1,6 +1,66 @@
 # SafeText AI — Cyberbullying & Toxicity Detection
 
-A full-stack AI-powered web app that detects cyberbullying, toxicity, sarcasm, and sentiment in text. Built as a Final Year Project.
+A full-stack AI-powered web application that detects cyberbullying, toxicity, sarcasm, and sentiment in text. Built as a Final Year Project.
+
+---
+
+## 📋 Project Overview
+
+**SafeText AI** is a comprehensive web-based system designed to analyze text content for potentially harmful or abusive language. The application provides:
+
+- **Real-time Text Analysis** — Analyze any text for toxicity levels
+- **User Authentication** — Secure signup/login with JWT tokens
+- **Analysis History** — Track and manage past analysis results
+- **Dashboard Analytics** — Comprehensive statistics and reports
+- **Admin Panel** — User management and system monitoring
+- **Activity Tracking** — Real-time activity feed and alerts
+
+### Core Features
+
+| Feature | Description |
+|---------|-------------|
+| Toxicity Detection | Analyzes text for harmful/toxic language |
+| Sarcasm Detection | Identifies sarcastic or ironic content |
+| Sentiment Analysis | Determines if text is positive, negative, or neutral |
+| Cyberbullying Probability | Calculates likelihood of cyberbullying |
+| User Management | Admin can manage users and roles |
+| Data Export | Export analysis data in CSV/JSON/Excel formats |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend Technologies
+
+| Library/Framework | Version | Purpose |
+|------------------|---------|---------|
+| **React** | 18.3.1 | UI framework for building the interface |
+| **Vite** | 5.4.2 | Build tool and dev server |
+| **TypeScript** | 5.5.3 | Type-safe JavaScript |
+| **Tailwind CSS** | 3.4.1 | Utility-first CSS framework |
+| **React Router DOM** | 7.9.6 | Client-side routing |
+| **Axios** | 1.13.2 | HTTP client for API calls |
+| **Framer Motion** | 12.23.24 | Animation library |
+| **Lucide React** | 0.344.0 | Icon library |
+| **Supabase JS** | 2.57.4 | Supabase client for frontend |
+
+### Backend Technologies
+
+| Library/Framework | Version | Purpose |
+|------------------|---------|---------|
+| **Flask** | 3.1.2 | Python web framework |
+| **Flask-JWT-Extended** | 4.7.1 | JWT authentication |
+| **Flask-CORS** | 6.0.1 | Cross-origin resource sharing |
+| **psycopg2-binary** | 2.9.11 | PostgreSQL adapter for Python |
+| **bcrypt** | 5.0.0+ | Password hashing |
+| **python-dotenv** | 1.2.1 | Environment variable management |
+| **gunicorn** | 23.0.0 | WSGI HTTP server |
+
+### Database
+
+| Service | Type | Purpose |
+|---------|------|---------|
+| **Supabase** | PostgreSQL | Cloud database with REST API |
 
 ---
 
@@ -76,17 +136,47 @@ cyberbulling/
 
 ---
 
-## Tech Stack
+## 🧰 Detailed Tech Stack
 
-| Layer      | Technology                              |
-|------------|-----------------------------------------|
-| Frontend   | React 18, Vite, TypeScript, Tailwind CSS |
-| Animations | Framer Motion                           |
-| Icons      | Lucide React                            |
-| HTTP       | Axios                                   |
-| Backend    | Python, Flask, Flask-JWT-Extended       |
-| Database   | PostgreSQL (Supabase)                   |
-| Auth       | JWT tokens (bcrypt password hashing)    |
+### Frontend Dependencies
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| `react` | ^18.3.1 | Core React library |
+| `react-dom` | ^18.3.1 | React DOM rendering |
+| `react-router-dom` | ^7.9.6 | Routing and navigation |
+| `axios` | ^1.13.2 | HTTP client for API requests |
+| `framer-motion` | ^12.23.24 | Declarative animations |
+| `lucide-react` | ^0.344.0 | Icon components |
+| `@supabase/supabase-js` | ^2.57.4 | Supabase JavaScript client |
+| `tailwindcss` | ^3.4.1 | Utility CSS framework |
+| `typescript` | ^5.5.3 | TypeScript compiler |
+| `vite` | ^5.4.2 | Next-generation build tool |
+| `@vitejs/plugin-react` | ^4.3.1 | Vite React plugin |
+| `postcss` | ^8.4.35 | CSS transformations |
+| `autoprefixer` | ^10.4.18 | Vendor prefixer for CSS |
+| `eslint` | ^9.9.1 | JavaScript/TypeScript linter |
+
+### Backend Dependencies
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| `flask` | ^3.1.2 | Lightweight WSGI web framework |
+| `flask-cors` | ^6.0.1 | CORS handling for Flask |
+| `flask-jwt-extended` | ^4.7.1 | JWT authentication for Flask |
+| `psycopg2-binary` | ^2.9.11 | PostgreSQL adapter |
+| `bcrypt` | ^5.0.0 | Password hashing library |
+| `python-dotenv` | ^1.2.1 | Load environment variables |
+| `gunicorn` | ^23.0.0 | WSGI application server |
+
+### Optional ML Dependencies (for real model integration)
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| `transformers` | >=4.35.0 | Hugging Face Transformers |
+| `torch` | >=2.1.0 | PyTorch deep learning |
+| `tokenizers` | >=0.15.0 | Fast tokenizers |
+| `scikit-learn` | >=1.3.2 | Machine learning library |
 
 ---
 
