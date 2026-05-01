@@ -4,6 +4,18 @@ A full-stack AI-powered web app that detects cyberbullying, toxicity, sarcasm, a
 
 ---
 
+## ⚠️ Current Classifier Status
+
+**Note:** The current classifier (`backend/utils/classifier.py`) is a **rule-based classifier** that uses keyword matching and heuristics. It is functional but not a real ML model.
+
+To use a real ML model, replace `classifier.py` with either:
+- `classifier_template_bert.py` (BERT/Transformer model)
+- `classifier_template_sklearn.py` (Scikit-learn model)
+
+See [Model Integration](#model-integration) section below.
+
+---
+
 ## Project Structure
 
 ```
@@ -32,7 +44,8 @@ cyberbulling/
 │   │   ├── auth_controller.py
 │   │   ├── admin_controller.py
 │   │   ├── analysis_controller.py
-│   │   └── history_controller.py
+│   │   ├── history_controller.py
+│   │   └── activity_controller.py
 │   ├── models/             # Data models (Supabase REST)
 │   │   ├── user.py
 │   │   └── analysis_history.py
@@ -40,9 +53,12 @@ cyberbulling/
 │   │   ├── auth.py
 │   │   ├── admin.py
 │   │   ├── analysis.py
-│   │   └── history.py
+│   │   ├── history.py
+│   │   └── activity.py
 │   └── utils/              # Helpers & AI classifier
 │       ├── classifier.py
+│       ├── classifier_template_bert.py
+│       ├── classifier_template_sklearn.py
 │       └── helpers.py
 │
 ├── database/               # Database connection utilities
@@ -173,6 +189,12 @@ Tables created:
 | GET    | /admin/history        | List all history  |
 | DELETE | /admin/user/:id       | Delete a user     |
 
+### Activity (requires JWT)
+| Method | Endpoint          | Description              |
+|--------|-------------------|--------------------------|
+| GET    | /activity/:user_id | Get user activities      |
+| POST   | /activity/log     | Log a new activity       |
+
 ---
 
 ## Default Admin Login
@@ -246,6 +268,35 @@ Regular users can register via the `/signup` page.
 - **Profile Settings** — Account management and preferences
 - **Dashboard Settings** — Notification and privacy preferences
 - **Support** — FAQ, feedback submission, and resources
+
+---
+
+## Model Integration
+
+The project includes templates for integrating real ML models:
+
+### Option A: BERT/Transformer Model
+1. Install dependencies:
+```bash
+pip install transformers torch
+```
+2. Replace `backend/utils/classifier.py` with content from `classifier_template_bert.py`
+3. Update `model_name` to your trained model path or Hugging Face model ID
+
+### Option B: Scikit-learn Model
+1. Install dependencies:
+```bash
+pip install scikit-learn joblib
+```
+2. Replace `backend/utils/classifier.py` with content from `classifier_template_sklearn.py`
+3. Update model path to point to your `.joblib` or `.pkl` file
+
+### Current Implementation
+The current `classifier.py` uses keyword-based heuristics:
+- Toxic word detection
+- Sentiment analysis
+- Sarcasm detection via pattern matching
+- Returns: `toxicity_score`, `cyberbullying_prob`, `sarcasm`, `sentiment`
 
 ---
 
