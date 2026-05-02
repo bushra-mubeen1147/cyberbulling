@@ -19,3 +19,8 @@ def log_activity():
         data.get('description'),
         data.get('metadata')
     )
+
+@activity_bp.route('/alerts/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_user_alerts(user_id):
+    return ActivityController.get_user_alerts(user_id)

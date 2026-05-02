@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { 
+import {
   MessageCircle,
   Send,
   MessageSquare,
@@ -8,8 +8,11 @@ import {
   Mail,
   ArrowRight
 } from 'lucide-react';
+import { contactAPI } from '../api/api.js';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 export default function Support({ darkMode }) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('feedback');
   const [formData, setFormData] = useState({
     type: 'bug',
@@ -17,6 +20,7 @@ export default function Support({ darkMode }) {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const faqs = [
     {
@@ -80,13 +84,31 @@ export default function Support({ darkMode }) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({ type: 'bug', subject: '', message: '' });
-    }, 3000);
+    setSubmitError('');
+
+    if (!user) {
+      setSubmitError('You must be logged in to submit feedback.');
+      return;
+    }
+
+    try {
+      await contactAPI.createSupportTicket({
+        title: formData.subject,
+        description: formData.message,
+        type: formData.type,
+        priority: 'medium',
+        category: formData.type
+      });
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setFormData({ type: 'bug', subject: '', message: '' });
+      }, 3000);
+    } catch (err) {
+      setSubmitError(err.response?.data?.error || 'Failed to submit. Please try again.');
+    }
   };
 
   return (
@@ -217,6 +239,10 @@ export default function Support({ darkMode }) {
                   } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
                 />
               </div>
+
+              {submitError && (
+                <p className="text-sm text-red-500 dark:text-red-400">{submitError}</p>
+              )}
 
               <button
                 type="submit"

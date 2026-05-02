@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Globe, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { useState } from 'react';
+import { contactAPI } from '../api/api.js';
 
 export default function Contact({ darkMode }) {
   const [formData, setFormData] = useState({
@@ -25,8 +26,15 @@ export default function Contact({ darkMode }) {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      const response = await contactAPI.sendMessage({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        category: formData.category
+      });
+      
       setLoading(false);
       setSubmitted(true);
       setFormData({
@@ -39,7 +47,10 @@ export default function Contact({ darkMode }) {
       
       // Reset success message after 5 seconds
       setTimeout(() => setSubmitted(false), 5000);
-    }, 1500);
+    } catch (err) {
+      setLoading(false);
+      alert(err.response?.data?.error || 'Failed to send message. Please try again.');
+    }
   };
 
   const contactInfo = [

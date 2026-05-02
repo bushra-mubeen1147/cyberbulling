@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Settings as SettingsIcon,
   Moon,
@@ -9,6 +9,7 @@ import {
   Save,
   RotateCcw
 } from 'lucide-react';
+import { settingsAPI } from '../api/api.js';
 
 export default function DashboardSettings({ darkMode: initialDarkMode }) {
   const [darkMode, setDarkMode] = useState(initialDarkMode);
@@ -26,6 +27,26 @@ export default function DashboardSettings({ darkMode: initialDarkMode }) {
 
   const [saveMessage, setSaveMessage] = useState('');
 
+  // Load saved settings from backend on mount
+  useEffect(() => {
+    settingsAPI.get()
+      .then(res => {
+        const s = res.data?.data || {};
+        setSettings({
+          emailNotifications: s.notifications_enabled ?? true,
+          pushNotifications: s.push_notifications ?? true,
+          weeklyReports: s.weekly_reports ?? false,
+          criticalAlerts: s.email_alerts ?? true,
+          analysisAutoSave: s.auto_save ?? true,
+          privacyMode: s.privacy_mode ?? false,
+          dataCollection: s.data_collection ?? true,
+          apiRateLimit: s.api_rate_limit ?? 'standard',
+          analysisThreshold: s.analysis_threshold ?? 'medium'
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   const handleToggle = (key) => {
     setSettings(prev => ({
       ...prev,
@@ -40,9 +61,26 @@ export default function DashboardSettings({ darkMode: initialDarkMode }) {
     }));
   };
 
-  const handleSave = () => {
-    setSaveMessage('Settings saved successfully!');
-    setTimeout(() => setSaveMessage(''), 3000);
+  const handleSave = async () => {
+    try {
+      await settingsAPI.save({
+        theme: darkMode ? 'dark' : 'light',
+        notifications_enabled: settings.emailNotifications,
+        email_alerts: settings.criticalAlerts,
+        auto_save: settings.analysisAutoSave,
+        privacy_mode: settings.privacyMode,
+        data_collection: settings.dataCollection,
+        api_rate_limit: settings.apiRateLimit,
+        analysis_threshold: settings.analysisThreshold,
+        weekly_reports: settings.weeklyReports,
+        push_notifications: settings.pushNotifications
+      });
+      setSaveMessage('Settings saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (err) {
+      setSaveMessage('Failed to save settings. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    }
   };
 
   const handleReset = () => {

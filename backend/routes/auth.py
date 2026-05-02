@@ -18,3 +18,15 @@ def login():
 @jwt_required()
 def get_user():
     return AuthController.get_current_user()
+
+@auth_bp.route('/profile/update', methods=['POST'])
+@jwt_required()
+def update_profile():
+    data = request.get_json()
+    return AuthController.update_profile(data)
+
+@auth_bp.route('/password/update', methods=['POST'])
+@jwt_required()
+def update_password():
+    data = request.get_json()
+    return AuthController.update_password(data)

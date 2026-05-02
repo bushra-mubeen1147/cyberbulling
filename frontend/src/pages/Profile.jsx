@@ -20,7 +20,7 @@ import {
   Upload
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { authAPI, settingsAPI, historyAPI } from '../api/api.js';
 
 export default function Profile({ darkMode }) {
   const { user } = useAuth();
@@ -31,13 +31,31 @@ export default function Profile({ darkMode }) {
 
   // Account Settings State
   const [accountData, setAccountData] = useState({
-    fullName: '',
+    fullName: user?.name || '',
     email: user?.email || '',
-    username: '',
+    username: user?.email ? user.email.split('@')[0] : '',
     bio: '',
     location: '',
     website: ''
   });
+
+  // Load full profile from backend on mount
+  useEffect(() => {
+    if (!user) return;
+    authAPI.getUser()
+      .then(res => {
+        const u = res.data?.data || {};
+        setAccountData({
+          fullName: u.name || user.name || '',
+          email: u.email || user.email || '',
+          username: (u.email || user.email || '').split('@')[0],
+          bio: u.bio || '',
+          location: u.location || '',
+          website: u.website || ''
+        });
+      })
+      .catch(() => {});
+  }, [user?.id]);
 
   // Security Settings State
   const [securityData, setSecurityData] = useState({
@@ -69,35 +87,27 @@ export default function Profile({ darkMode }) {
     dataRetention: '90days'
   });
 
-  // Fetch user stats
+  // Fetch user stats via backend API
   useEffect(() => {
     const fetchStats = async () => {
       if (!user) return;
-      
       try {
-        const { data, error } = await supabase
-          .from('analysis_history')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (!error && data) {
-          const flagged = data.filter(item => 
-            item.toxicity_score > 0.7 || item.cyberbullying_prob > 0.7
-          ).length;
-
-          setStats({
-            totalAnalyses: data.length,
-            flaggedContent: flagged,
-            lastActive: data.length > 0 ? data[0].created_at : null
-          });
-        }
+        const res = await historyAPI.getByUserId(user.id);
+        const data = res.data?.data || [];
+        const flagged = data.filter(item =>
+          item.toxicity_score > 0.7 || item.cyberbullying_prob > 0.7
+        ).length;
+        setStats({
+          totalAnalyses: data.length,
+          flaggedContent: flagged,
+          lastActive: data.length > 0 ? data[0].created_at : null
+        });
       } catch (err) {
         console.error('Error fetching stats:', err);
       }
     };
-
     fetchStats();
-  }, [user]);
+  }, [user?.id]);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -109,11 +119,15 @@ export default function Profile({ darkMode }) {
     setLoading(true);
 
     try {
-      // Simulate API call (replace with actual Supabase update)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authAPI.updateProfile({
+        name: accountData.fullName,
+        bio: accountData.bio,
+        location: accountData.location,
+        website: accountData.website
+      });
       showMessage('success', 'Profile updated successfully!');
     } catch (err) {
-      showMessage('error', 'Failed to update profile. Please try again.');
+      showMessage('error', err.response?.data?.error || 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -127,19 +141,18 @@ export default function Profile({ darkMode }) {
       return;
     }
 
-    if (securityData.newPassword.length < 8) {
-      showMessage('error', 'Password must be at least 8 characters long!');
+    if (securityData.newPassword.length < 6) {
+      showMessage('error', 'Password must be at least 6 characters long!');
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: securityData.newPassword
+      const response = await authAPI.updatePassword({
+        current_password: securityData.currentPassword,
+        new_password: securityData.newPassword
       });
-
-      if (error) throw error;
 
       setSecurityData({
         currentPassword: '',
@@ -149,7 +162,7 @@ export default function Profile({ darkMode }) {
       });
       showMessage('success', 'Password changed successfully!');
     } catch (err) {
-      showMessage('error', err.message || 'Failed to change password.');
+      showMessage('error', err.response?.data?.error || 'Failed to change password.');
     } finally {
       setLoading(false);
     }
@@ -158,11 +171,14 @@ export default function Profile({ darkMode }) {
   const handleNotificationUpdate = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await settingsAPI.save({
+        notifications_enabled: notifications.emailNotifications,
+        email_alerts: notifications.highRiskAlerts,
+        auto_save: notifications.analysisComplete
+      });
       showMessage('success', 'Notification preferences updated!');
     } catch (err) {
-      showMessage('error', 'Failed to update preferences.');
+      showMessage('error', err.response?.data?.error || 'Failed to update preferences.');
     } finally {
       setLoading(false);
     }
@@ -171,10 +187,14 @@ export default function Profile({ darkMode }) {
   const handlePrivacyUpdate = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await settingsAPI.save({
+        profile_visibility: privacy.profileVisibility,
+        share_analytics: privacy.shareAnalytics,
+        data_retention: privacy.dataRetention
+      });
       showMessage('success', 'Privacy settings updated!');
     } catch (err) {
-      showMessage('error', 'Failed to update privacy settings.');
+      showMessage('error', err.response?.data?.error || 'Failed to update privacy settings.');
     } finally {
       setLoading(false);
     }

@@ -8,7 +8,7 @@ import {
   Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function Statistics({ darkMode }) {
   const [timeRange, setTimeRange] = useState('7days');
@@ -23,6 +23,16 @@ export default function Statistics({ darkMode }) {
   const [detectionBreakdown, setDetectionBreakdown] = useState([]);
   const { user } = useAuth();
 
+  const [insights, setInsights] = useState([]);
+
+  const getDateCutoff = (range) => {
+    const now = new Date();
+    if (range === '7days') { now.setDate(now.getDate() - 7); return now; }
+    if (range === '30days') { now.setDate(now.getDate() - 30); return now; }
+    if (range === '90days') { now.setDate(now.getDate() - 90); return now; }
+    return null;
+  };
+
   const fetchStatistics = async () => {
     if (!user) {
       setLoading(false);
@@ -31,32 +41,34 @@ export default function Statistics({ darkMode }) {
 
     try {
       setLoading(true);
-      
-      // Fetch all history for the user
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id);
 
-      if (error) throw error;
+      // Fetch all history for the user via backend API
+      const res = await historyAPI.getByUserId(user.id);
+      const allData = res.data?.data || [];
 
-      const historyData = data || [];
+      // Apply time range filter
+      const cutoff = getDateCutoff(timeRange);
+      const historyData = cutoff
+        ? allData.filter(item => new Date(item.created_at) >= cutoff)
+        : allData;
+
       const total = historyData.length;
-      
+
       // Calculate toxic content (score > 0.5)
-      const toxic = historyData.filter(item => 
+      const toxic = historyData.filter(item =>
         item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5
       ).length;
-      
+
       // High risk (score > 0.7)
-      const highRisk = historyData.filter(item => 
+      const highRisk = historyData.filter(item =>
         item.toxicity_score > 0.7 || item.cyberbullying_prob > 0.7
       ).length;
-      
-      // Safe content percentage
-      const safe = total > 0 ? ((total - toxic) / total * 100).toFixed(1) : 0;
 
-      // Calculate detection breakdown by sentiment
+      // Safe content percentage
+      const safeCount = total - toxic;
+      const safe = total > 0 ? ((safeCount / total) * 100).toFixed(1) : 0;
+
+      // Detection breakdown by sentiment
       const sentimentCounts = {};
       historyData.forEach(item => {
         const sent = item.sentiment || 'neutral';
@@ -65,28 +77,47 @@ export default function Statistics({ darkMode }) {
 
       const breakdown = Object.entries(sentimentCounts).map(([type, count]) => ({
         type: type.charAt(0).toUpperCase() + type.slice(1),
-        count: count,
+        count,
         percentage: total > 0 ? Math.round((count / total) * 100) : 0
-      }));
+      })).sort((a, b) => b.count - a.count);
 
       setStats({
         totalAnalyses: total,
         toxicContent: toxic,
-        highRisk: highRisk,
+        highRisk,
         safePercentage: safe,
-        changes: {
-          analyses: total > 0 ? Math.round((total / 100) * 12) : 0,
-          toxic: toxic > 0 ? -5 : 0,
-          risk: highRisk > 0 ? 3 : 0,
-          safe: parseFloat(safe) > 0 ? 8 : 0
-        }
+        changes: { analyses: 0, toxic: 0, risk: 0, safe: 0 }
       });
-      
+
       setDetectionBreakdown(breakdown.length > 0 ? breakdown : [
         { type: 'Neutral', count: 0, percentage: 0 },
         { type: 'Positive', count: 0, percentage: 0 },
         { type: 'Negative', count: 0, percentage: 0 }
       ]);
+
+      // Build dynamic insights
+      const newInsights = [];
+      if (total === 0) {
+        newInsights.push({ emoji: '📊', title: 'No Data Yet', body: 'Analyze some text to see your stats here.', color: 'blue' });
+      } else {
+        const toxicPct = total > 0 ? ((toxic / total) * 100).toFixed(0) : 0;
+        const safePct = parseFloat(safe);
+
+        if (highRisk > 0) {
+          newInsights.push({ emoji: '⚠️', title: 'High Risk Found', body: `${highRisk} high-risk item${highRisk > 1 ? 's' : ''} detected — review your alerts.`, color: 'red' });
+        }
+        if (safePct >= 70) {
+          newInsights.push({ emoji: '✓', title: 'Mostly Safe', body: `${safePct}% of your analyzed content is safe.`, color: 'green' });
+        }
+        if (toxic > 0) {
+          newInsights.push({ emoji: '📈', title: 'Toxic Rate', body: `${toxicPct}% of analyses flagged as toxic or harmful.`, color: 'orange' });
+        }
+        const negative = historyData.filter(i => i.sentiment === 'negative').length;
+        if (negative > 0) {
+          newInsights.push({ emoji: '😟', title: 'Negative Sentiment', body: `${negative} item${negative > 1 ? 's' : ''} had negative sentiment detected.`, color: 'purple' });
+        }
+      }
+      setInsights(newInsights);
 
     } catch (err) {
       console.error('Failed to fetch statistics:', err);
@@ -97,7 +128,7 @@ export default function Statistics({ darkMode }) {
 
   useEffect(() => {
     fetchStatistics();
-  }, [user?.id]);
+  }, [user?.id, timeRange]);
 
   const formatValue = (value) => {
     if (value >= 1000) {
@@ -274,7 +305,7 @@ export default function Statistics({ darkMode }) {
           </div>
         </div>
 
-        {/* Recent Insights */}
+        {/* Dynamic Insights */}
         <div
           className={`p-6 rounded-xl border ${
             darkMode
@@ -286,30 +317,28 @@ export default function Statistics({ darkMode }) {
             Insights
           </h3>
           <div className="space-y-3">
-            <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
-              <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
-                📈 Trend Up
+            {insights.length === 0 && !loading ? (
+              <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                No insights available yet.
               </p>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-blue-200/70' : 'text-blue-700/70'}`}>
-                Toxic content up 5% this week
-              </p>
-            </div>
-            <div className={`p-3 rounded-lg ${darkMode ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}>
-              <p className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-900'}`}>
-                ✓ Safe Majority
-              </p>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-green-200/70' : 'text-green-700/70'}`}>
-                92.8% of content is safe
-              </p>
-            </div>
-            <div className={`p-3 rounded-lg ${darkMode ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
-              <p className={`text-sm font-medium ${darkMode ? 'text-purple-300' : 'text-purple-900'}`}>
-                🎯 Peak Time
-              </p>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-purple-200/70' : 'text-purple-700/70'}`}>
-                Most analyses at 6PM-8PM
-              </p>
-            </div>
+            ) : (
+              insights.map((insight, idx) => {
+                const palettes = {
+                  blue:   { wrap: darkMode ? 'bg-blue-900/20 border-blue-800'   : 'bg-blue-50 border-blue-200',     title: darkMode ? 'text-blue-300'   : 'text-blue-900',   body: darkMode ? 'text-blue-200/70'   : 'text-blue-700/70'   },
+                  green:  { wrap: darkMode ? 'bg-green-900/20 border-green-800'  : 'bg-green-50 border-green-200',   title: darkMode ? 'text-green-300'  : 'text-green-900',  body: darkMode ? 'text-green-200/70'  : 'text-green-700/70'  },
+                  red:    { wrap: darkMode ? 'bg-red-900/20 border-red-800'      : 'bg-red-50 border-red-200',       title: darkMode ? 'text-red-300'    : 'text-red-900',    body: darkMode ? 'text-red-200/70'    : 'text-red-700/70'    },
+                  orange: { wrap: darkMode ? 'bg-orange-900/20 border-orange-800': 'bg-orange-50 border-orange-200', title: darkMode ? 'text-orange-300' : 'text-orange-900', body: darkMode ? 'text-orange-200/70' : 'text-orange-700/70' },
+                  purple: { wrap: darkMode ? 'bg-purple-900/20 border-purple-800': 'bg-purple-50 border-purple-200', title: darkMode ? 'text-purple-300' : 'text-purple-900', body: darkMode ? 'text-purple-200/70' : 'text-purple-700/70' },
+                };
+                const p = palettes[insight.color] || palettes.blue;
+                return (
+                  <div key={idx} className={`p-3 rounded-lg border ${p.wrap}`}>
+                    <p className={`text-sm font-medium ${p.title}`}>{insight.emoji} {insight.title}</p>
+                    <p className={`text-xs mt-1 ${p.body}`}>{insight.body}</p>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

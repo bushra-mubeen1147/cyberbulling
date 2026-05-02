@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Analyze from './pages/Analyze';
 import Login from './pages/Login';
@@ -69,7 +70,7 @@ function App() {
           <Route path="/about" element={<About darkMode={darkMode} />} />
           <Route path="/services" element={<Services darkMode={darkMode} />} />
           <Route path="/contact" element={<Contact darkMode={darkMode} />} />
-          <Route path="/dashboard" element={<Dashboard darkMode={darkMode} />}> 
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard darkMode={darkMode} /></ProtectedRoute>}>
             <Route path="analyze" element={<Analyze darkMode={darkMode} />} />
             <Route path="history" element={<History darkMode={darkMode} />} />
             <Route path="profile" element={<Profile darkMode={darkMode} />} />
@@ -85,13 +86,13 @@ function App() {
             <Route path="search" element={<AdvancedSearch darkMode={darkMode} />} />
             <Route path="export" element={<DataExport darkMode={darkMode} />} />
           </Route>
-          <Route path="/admin" element={<Admin darkMode={darkMode} />} />
+          <Route path="/admin" element={<ProtectedRoute isAdmin={true}><Admin darkMode={darkMode} /></ProtectedRoute>} />
           {/* Optional non-nested routes */}
-          <Route path="/analyze" element={<Analyze darkMode={darkMode} />} />
+          <Route path="/analyze" element={<ProtectedRoute><Analyze darkMode={darkMode} /></ProtectedRoute>} />
           <Route path="/login" element={<Login darkMode={darkMode} setUser={setUser} />} />
           <Route path="/signup" element={<Signup darkMode={darkMode} setUser={setUser} />} />
-          <Route path="/history" element={<History darkMode={darkMode} />} />
-          <Route path="/profile" element={<Profile darkMode={darkMode} />} />
+          <Route path="/history" element={<ProtectedRoute><History darkMode={darkMode} /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile darkMode={darkMode} /></ProtectedRoute>} />
         </Routes>
         <Footer darkMode={darkMode} />
       </div>

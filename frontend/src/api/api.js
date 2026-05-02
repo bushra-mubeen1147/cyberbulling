@@ -32,6 +32,8 @@ export const authAPI = {
   signup: (data) => api.post('/signup', data),
   login: (data) => api.post('/login', data),
   getUser: () => api.get('/user'),
+  updateProfile: (data) => api.post('/profile/update', data),
+  updatePassword: (data) => api.post('/password/update', data),
 };
 
 export const analysisAPI = {
@@ -41,6 +43,7 @@ export const analysisAPI = {
 export const historyAPI = {
   add: (data) => api.post('/history/add', data),
   getByUserId: (userId) => api.get(`/history/${userId}`),
+  delete: (historyId) => api.delete(`/history/delete/${historyId}`),
 };
 
 export const adminAPI = {
@@ -52,6 +55,27 @@ export const adminAPI = {
 export const activityAPI = {
   getActivities: (userId) => api.get(`/activity/${userId}`),
   logActivity: (data) => api.post('/activity/log', data),
+};
+
+export const settingsAPI = {
+  save: (data) => api.post('/settings/save', data),
+  get: () => api.get('/settings/get'),
+};
+
+export const contactAPI = {
+  sendMessage: (data) => api.post('/contact/send', data),
+  createSupportTicket: (data) => api.post('/contact/support/ticket', data),
+};
+
+export const alertsAPI = {
+  getByUserId: (userId) => api.get(`/alerts/${userId}`),
+};
+
+export const apiKeysAPI = {
+  getAll: () => api.get('/apikeys'),
+  create: (data) => api.post('/apikeys', data),
+  delete: (id) => api.delete(`/apikeys/${id}`),
+  regenerate: (id) => api.post(`/apikeys/${id}/regenerate`),
 };
 
 export default api;

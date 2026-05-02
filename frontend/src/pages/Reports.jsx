@@ -9,7 +9,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function Reports({ darkMode }) {
   const [reports, setReports] = useState([]);
@@ -27,18 +27,11 @@ export default function Reports({ darkMode }) {
     try {
       setLoading(true);
       
-      // Fetch history from Supabase
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const res = await historyAPI.getByUserId(user.id);
+      const data = res.data?.data || [];
 
-      if (error) throw error;
-
-      // Group by date to create reports
       const reportsMap = {};
-      (data || []).forEach(item => {
+      data.forEach(item => {
         const date = new Date(item.created_at);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());

@@ -12,7 +12,7 @@ import {
   Flag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function ContentReview({ darkMode }) {
   const [queue, setQueue] = useState([]);
@@ -29,19 +29,10 @@ export default function ContentReview({ darkMode }) {
 
     try {
       setLoading(true);
-      
-      // Fetch history from Supabase
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const res = await historyAPI.getByUserId(user.id);
+      const raw = (res.data?.data || []).slice(0, 20);
 
-      if (error) throw error;
-
-      // Transform into review items
-      const items = (data || []).map((item, idx) => {
+      const items = raw.map((item, idx) => {
         const toxicity = item.toxicity_score || 0;
         const cyberbullying = item.cyberbullying_prob || 0;
         const maxScore = Math.max(toxicity, cyberbullying);

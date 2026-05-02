@@ -11,7 +11,7 @@ import {
   Copy
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function DataExport({ darkMode }) {
   const [exportJobs, setExportJobs] = useState([]);
@@ -26,22 +26,11 @@ export default function DataExport({ darkMode }) {
   const { user } = useAuth();
 
   const fetchExportJobs = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
+    if (!user) { setLoading(false); return; }
     try {
       setLoading(true);
-      
-      // Fetch history from Supabase
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const res = await historyAPI.getByUserId(user.id);
+      const data = res.data?.data || [];
 
       // Group by month to create export jobs
       const jobsMap = {};
@@ -91,7 +80,7 @@ export default function DataExport({ darkMode }) {
     fetchExportJobs();
   }, [user?.id]);
 
-  const handleCreateExport = () => {
+  const handleCreateExport = async () => {
     if (exportConfig.name.trim()) {
       const newExport = {
         id: Date.now(),
@@ -103,17 +92,69 @@ export default function DataExport({ darkMode }) {
         records: 0
       };
       setExportJobs([newExport, ...exportJobs]);
-      setExportConfig({ name: '', format: 'csv', dataType: 'all', dateRange: 'all' });
-      setShowExportModal(false);
+      
+      try {
+        const res = await historyAPI.getByUserId(user.id);
+        const records = res.data?.data || [];
+        
+        // Generate file content based on format
+        let fileContent, filename, mimeType;
+        
+        if (exportConfig.format === 'csv') {
+          // Generate CSV
+          const headers = ['ID', 'Text', 'Toxicity Score', 'Cyberbullying Prob', 'Sarcasm', 'Sentiment', 'Date'];
+          const rows = records.map(r => [
+            r.id,
+            `"${(r.input_text || '').replace(/"/g, '""')}"`,
+            r.toxicity_score,
+            r.cyberbullying_prob,
+            r.result_sarcasm ? 'Yes' : 'No',
+            r.sentiment || 'N/A',
+            new Date(r.created_at).toLocaleString()
+          ]);
+          fileContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+          filename = `${exportConfig.name}_${new Date().toISOString().split('T')[0]}.csv`;
+          mimeType = 'text/csv';
+        } else {
+          // Generate JSON
+          fileContent = JSON.stringify(records, null, 2);
+          filename = `${exportConfig.name}_${new Date().toISOString().split('T')[0]}.json`;
+          mimeType = 'application/json';
+        }
 
-      // Simulate completion
-      setTimeout(() => {
+        // Trigger download
+        const blob = new Blob([fileContent], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // Update job status to completed
         setExportJobs(prev => prev.map(job =>
           job.id === newExport.id
-            ? { ...job, status: 'completed', size: '2.5 MB', records: Math.floor(Math.random() * 2000) }
+            ? { 
+                ...job, 
+                status: 'completed', 
+                size: `${(records.length * 0.002).toFixed(1)} MB`, 
+                records: records.length 
+              }
             : job
         ));
-      }, 3000);
+        
+        setExportConfig({ name: '', format: 'csv', dataType: 'all', dateRange: 'all' });
+        setShowExportModal(false);
+      } catch (err) {
+        console.error('Export failed:', err);
+        setExportJobs(prev => prev.map(job =>
+          job.id === newExport.id
+            ? { ...job, status: 'failed' }
+            : job
+        ));
+      }
     }
   };
 

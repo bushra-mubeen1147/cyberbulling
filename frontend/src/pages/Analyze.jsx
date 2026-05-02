@@ -4,9 +4,8 @@ import { Send, Save, AlertTriangle, CheckCircle, TrendingUp, MessageSquare, BarC
 import Spinner from '../components/Spinner';
 import ResultCard from '../components/ResultCard';
 import Tooltip from '../components/Tooltip';
-import { analysisAPI } from '../api/api';
+import { analysisAPI, historyAPI } from '../api/api';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
 import { useLocation } from 'react-router-dom';
 
 export default function Analyze({ darkMode }) {
@@ -67,24 +66,19 @@ export default function Analyze({ darkMode }) {
       return;
     }
     try {
-      const { error: insertError } = await supabase
-        .from('analysis_history')
-        .insert({
-          user_id: user.id,
-          input_text: text,
-          toxicity_score: result.toxicity_score,
-          cyberbullying_prob: result.cyberbullying_prob,
-          result_sarcasm: result.sarcasm,
-          sentiment: result.sentiment,
-          tweet_url: url || null,
-          created_at: new Date().toISOString(),
-        });
-      if (insertError) throw insertError;
+      await historyAPI.add({
+        text,
+        toxicity_score: result.toxicity_score,
+        cyberbullying_prob: result.cyberbullying_prob,
+        sarcasm: result.sarcasm,
+        sentiment: result.sentiment,
+        tweet_url: url || null,
+      });
       setError('');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError(err.message || 'Failed to save. Please try again.');
+      setError(err.response?.data?.error || 'Failed to save. Please try again.');
     }
   };
 

@@ -1,12 +1,13 @@
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  History, 
-  User, 
-  Search, 
-  Bell, 
+import { alertsAPI } from '../api/api.js';
+import {
+  LayoutDashboard,
+  FileText,
+  History,
+  User,
+  Search,
+  Bell,
   Settings,
   LogOut,
   ChevronRight,
@@ -22,15 +23,47 @@ import {
   Database,
   Download
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardSidebar from '../components/DashboardSidebar.jsx';
+
+const getRelativeTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
 export default function Dashboard({ darkMode }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    if (!user) return;
+    alertsAPI.getByUserId(user.id)
+      .then(res => {
+        const data = res.data?.data || [];
+        setNotifications(
+          data.slice(0, 5).map(a => ({
+            id: a.id,
+            text: a.content,
+            time: getRelativeTime(a.created_at),
+            unread: !a.is_read
+          }))
+        );
+      })
+      .catch(() => {});
+  }, [user?.id]);
+
   const isActive = (path) => location.pathname === path;
   const atRoot = location.pathname === '/dashboard';
 
@@ -131,12 +164,6 @@ export default function Dashboard({ darkMode }) {
       label: 'Support',
       description: 'Get help'
     }
-  ];
-
-  const notifications = [
-    { id: 1, text: 'New analysis completed', time: '2m ago', unread: true },
-    { id: 2, text: 'Weekly report available', time: '1h ago', unread: true },
-    { id: 3, text: 'Account security updated', time: '3h ago', unread: false }
   ];
 
   const unreadCount = notifications.filter(n => n.unread).length;

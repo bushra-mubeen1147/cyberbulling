@@ -9,7 +9,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function ActivityFeed({ darkMode }) {
   const [activities, setActivities] = useState([]);
@@ -25,19 +25,11 @@ export default function ActivityFeed({ darkMode }) {
 
     try {
       setLoading(true);
-      
-      // Fetch history from Supabase
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
 
-      if (error) throw error;
+      const res = await historyAPI.getByUserId(user.id);
+      const raw = (res.data?.data || []).slice(0, 20);
 
-      // Transform history data into activities
-      const transformedActivities = (data || []).map((item, idx) => {
+      const transformedActivities = raw.map((item, idx) => {
         const isToxic = item.toxicity_score > 0.5 || item.cyberbullying_prob > 0.5;
         const isHighRisk = item.toxicity_score > 0.7 || item.cyberbullying_prob > 0.7;
         

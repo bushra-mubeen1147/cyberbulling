@@ -9,7 +9,7 @@ import {
   Info
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { supabase } from '../lib/supabase.js';
+import { historyAPI } from '../api/api.js';
 
 export default function TrendingTopics({ darkMode }) {
   const [timeRange, setTimeRange] = useState('week');
@@ -25,13 +25,17 @@ export default function TrendingTopics({ darkMode }) {
 
     try {
       setLoading(true);
-      
-      // Fetch history from Supabase
-      const { data, error } = await supabase
-        .from('analysis_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+
+      // Build date cutoff based on selected time range
+      const now = new Date();
+      let cutoff = null;
+      if (timeRange === 'day') { cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 1); }
+      else if (timeRange === 'week') { cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 7); }
+      else if (timeRange === 'month') { cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30); }
+
+      const res = await historyAPI.getByUserId(user.id);
+      let data = res.data?.data || [];
+      if (cutoff) data = data.filter(item => new Date(item.created_at) >= cutoff);
 
       if (error) throw error;
 
@@ -127,7 +131,7 @@ export default function TrendingTopics({ darkMode }) {
 
   useEffect(() => {
     fetchTrendingTopics();
-  }, [user?.id]);
+  }, [user?.id, timeRange]);
 
   const getSeverityColor = (severity) => {
     switch(severity) {

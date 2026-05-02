@@ -14,3 +14,8 @@ def add_history():
 @jwt_required()
 def get_history(user_id):
     return HistoryController.get_user_history(user_id)
+
+@history_bp.route('/history/delete/<int:history_id>', methods=['DELETE'])
+@jwt_required()
+def delete_history(history_id):
+    return HistoryController.delete_history(history_id)
