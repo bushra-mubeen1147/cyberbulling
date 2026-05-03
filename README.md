@@ -1,6 +1,18 @@
 # SafeText AI — Cyberbullying & Toxicity Detection
 
-A full-stack AI-powered web application that detects cyberbullying, toxicity, sarcasm, and sentiment in text. Built as a Final Year Project.
+> **Final Year Project** — A production-ready, full-stack AI web application that detects cyberbullying, toxicity, sarcasm, and sentiment in text. Every feature uses real database-backed data — nothing is mocked.
+
+---
+
+## Overview
+
+SafeText AI allows users to submit text (social media posts, messages, comments) and instantly receive:
+- **Toxicity Score** — how harmful the content is (0–100%)
+- **Cyberbullying Probability** — likelihood of bullying or harassment (0–100%)
+- **Sentiment Analysis** — positive, negative, or neutral
+- **Sarcasm Detection** — identifies masked harmful intent
+
+All results are saved to a personal dashboard with full history, reports, alerts, trending pattern analysis, and an admin panel for platform monitoring.
 
 ---
 
@@ -8,11 +20,12 @@ A full-stack AI-powered web application that detects cyberbullying, toxicity, sa
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion |
-| Backend | Flask (Python), Flask-JWT-Extended, Flask-CORS |
-| Database | PostgreSQL via Supabase (direct psycopg2 + REST API) |
-| Auth | Custom JWT (bcrypt password hashing) |
-| ML Model | Rule-based classifier (BERT integration coming) |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Lucide Icons |
+| **Backend** | Python 3.11, Flask 3, Flask-JWT-Extended |
+| **Database** | PostgreSQL (Supabase hosted), psycopg2 direct connection |
+| **Authentication** | Custom JWT — bcrypt password hashing, 7-day token expiry |
+| **AI / ML** | Rule-based classifier (BERT model integration ready — see below) |
+| **HTTP Client** | Axios with JWT interceptor |
 
 ---
 
@@ -20,85 +33,113 @@ A full-stack AI-powered web application that detects cyberbullying, toxicity, sa
 
 ```
 cyberbulling/
+│
 ├── backend/
-│   ├── app.py                        # Flask app factory
-│   ├── config.py                     # JWT & env config
-│   ├── main.py                       # Entry point (port 8000)
+│   ├── app.py                         # Flask app factory, CORS, blueprint registration
+│   ├── config.py                      # JWT secret, DB URL from environment
+│   ├── main.py                        # Entry point — runs on port 8000
+│   │
 │   ├── controllers/
-│   │   ├── auth_controller.py        # Signup, login, profile, password
-│   │   ├── analysis_controller.py    # Text classification
-│   │   ├── history_controller.py     # Save & fetch analysis history
-│   │   ├── admin_controller.py       # Admin: users & flagged content
-│   │   ├── activity_controller.py    # Activities & alerts
-│   │   ├── settings_controller.py    # User settings (DB-persisted)
-│   │   ├── contact_controller.py     # Contact form & support tickets
-│   │   └── api_keys_controller.py    # API key CRUD
+│   │   ├── auth_controller.py         # signup, login, profile update, password change
+│   │   ├── analysis_controller.py     # calls classifier, returns scores
+│   │   ├── history_controller.py      # save/fetch/delete analysis history + auto-alerts
+│   │   ├── admin_controller.py        # list all users, all history, delete user
+│   │   ├── activity_controller.py     # activity log, user alerts from alerts table
+│   │   ├── settings_controller.py     # UPSERT user settings to user_settings table
+│   │   ├── contact_controller.py      # contact form → contact_messages, tickets → support_tickets
+│   │   └── api_keys_controller.py     # create / list / delete / regenerate API keys
+│   │
 │   ├── models/
-│   │   ├── user.py                   # User model (Supabase REST)
-│   │   └── analysis_history.py       # History model (psycopg2)
+│   │   ├── user.py                    # User CRUD using psycopg2 (no Supabase REST dependency)
+│   │   └── analysis_history.py        # History CRUD using psycopg2
+│   │
 │   ├── routes/
-│   │   ├── auth.py       /signup /login /user /profile/update /password/update
-│   │   ├── analysis.py   /analyze
-│   │   ├── history.py    /history/add  /history/<user_id>
-│   │   ├── admin.py      /admin/users  /admin/history  /admin/user/<id>
-│   │   ├── activity.py   /activity/<user_id>  /activity/log  /alerts/<user_id>
-│   │   ├── settings.py   /settings/save  /settings/get
-│   │   ├── contact.py    /contact/send  /contact/support/ticket
-│   │   └── api_keys.py   /apikeys  /apikeys/<id>  /apikeys/<id>/regenerate
+│   │   ├── auth.py                    # POST /signup  POST /login  GET /user  POST /profile/update  POST /password/update
+│   │   ├── analysis.py                # POST /analyze
+│   │   ├── history.py                 # POST /history/add  GET /history/<user_id>  DELETE /history/delete/<id>
+│   │   ├── admin.py                   # GET /admin/users  GET /admin/history  DELETE /admin/user/<id>
+│   │   ├── activity.py                # GET /activity/<user_id>  POST /activity/log  GET /alerts/<user_id>
+│   │   ├── settings.py                # POST /settings/save  GET /settings/get
+│   │   ├── contact.py                 # POST /contact/send  POST /contact/support/ticket
+│   │   └── api_keys.py                # GET /apikeys  POST /apikeys  DELETE /apikeys/<id>  POST /apikeys/<id>/regenerate
+│   │
 │   └── utils/
-│       ├── classifier.py             # Active: rule-based classifier
-│       ├── classifier_template_bert.py   # Template for BERT (tomorrow)
-│       └── helpers.py                # format_response / format_error
+│       ├── classifier.py              # Active classifier (rule-based, swap for BERT)
+│       ├── classifier_template_bert.py  # Ready-to-use BERT integration template
+│       └── helpers.py                 # format_response() / format_error()
 │
-├── frontend/src/
-│   ├── api/api.js                    # Axios client + all API modules
-│   ├── context/AuthProvider.jsx      # Global auth state (JWT in localStorage)
-│   ├── components/
-│   │   ├── ProtectedRoute.jsx        # Auth guard
-│   │   ├── DashboardSidebar.jsx
-│   │   ├── HistoryTable.jsx
-│   │   ├── ResultCard.jsx
-│   │   ├── Navbar.jsx / Footer.jsx
-│   │   └── Spinner.jsx / Tooltip.jsx
-│   └── pages/
-│       ├── Login.jsx / Signup.jsx
-│       ├── Dashboard.jsx             # Shell with sidebar + nested routes
-│       ├── Analyze.jsx               # Text analysis (saves via backend API)
-│       ├── History.jsx               # Sortable, filterable, CSV export
-│       ├── Statistics.jsx            # Real stats + time range filter
-│       ├── Reports.jsx               # Weekly reports grouped by date
-│       ├── Alerts.jsx                # Derived from analysis_history scores
-│       ├── ActivityFeed.jsx          # Analysis activity timeline
-│       ├── TrendingTopics.jsx        # Pattern analysis with time filter
-│       ├── APIManagement.jsx         # Full CRUD API keys (DB-persisted)
-│       ├── ContentReview.jsx         # Moderation queue
-│       ├── AdvancedSearch.jsx        # Real search + filters on history
-│       ├── DataExport.jsx            # CSV/JSON download
-│       ├── Profile.jsx               # Account settings (loaded from backend)
-│       ├── DashboardSettings.jsx     # App settings (DB-persisted)
-│       ├── Support.jsx               # Feedback → backend support_tickets
-│       ├── Admin.jsx                 # Admin panel
-│       └── Contact.jsx               # Public contact form → DB
+├── database/
+│   └── connection.py                  # psycopg2 context manager + init_db() with migrations
 │
-├── database/connection.py            # psycopg2 context manager + init_db()
-├── migrations/001_initial_schema.sql # Full schema
-└── .env                              # DATABASE_URL, SUPABASE_*, JWT_SECRET_KEY
+├── migrations/
+│   └── 001_initial_schema.sql         # Full schema — all 8 tables
+│
+├── frontend/
+│   └── src/
+│       ├── api/
+│       │   ├── api.js                 # Axios client + authAPI, analysisAPI, historyAPI,
+│       │   │                          # adminAPI, activityAPI, alertsAPI, settingsAPI,
+│       │   │                          # contactAPI, apiKeysAPI
+│       │   └── config.js              # API base URL (http://127.0.0.1:8000)
+│       │
+│       ├── context/
+│       │   └── AuthProvider.jsx       # Global auth state, JWT stored in localStorage
+│       │
+│       ├── components/
+│       │   ├── Navbar.jsx             # Public navbar with dark mode toggle
+│       │   ├── Footer.jsx
+│       │   ├── ProtectedRoute.jsx     # Auth guard — redirects unauthenticated users
+│       │   ├── DashboardSidebar.jsx   # Dashboard navigation sidebar
+│       │   ├── HistoryTable.jsx       # Reusable history list with delete
+│       │   ├── ResultCard.jsx         # Analysis result display card
+│       │   ├── Spinner.jsx
+│       │   └── Tooltip.jsx
+│       │
+│       └── pages/
+│           ├── Home.jsx               # Landing page
+│           ├── About.jsx
+│           ├── Services.jsx
+│           ├── Contact.jsx            # Public contact form → backend → contact_messages table
+│           ├── Login.jsx              # JWT login
+│           ├── Signup.jsx             # Registration
+│           ├── Dashboard.jsx          # Shell with sidebar, real notifications from alerts table
+│           ├── Analyze.jsx            # Text analysis + save to history via backend
+│           ├── History.jsx            # Full history — sort, filter, CSV export, delete
+│           ├── Statistics.jsx         # Real stats with 7d/30d/90d/all-time filter
+│           ├── Reports.jsx            # Weekly/monthly reports — generate + download CSV
+│           ├── Alerts.jsx             # Real alerts from alerts table (auto-created on toxicity >50%)
+│           ├── ActivityFeed.jsx       # Timeline of all analyses
+│           ├── TrendingTopics.jsx     # Pattern detection with real trend % vs previous period
+│           ├── APIManagement.jsx      # Full CRUD — keys stored in user_api_keys table
+│           ├── ContentReview.jsx      # Moderation queue with computed detection rate
+│           ├── AdvancedSearch.jsx     # Full-text + severity + date + sentiment filter
+│           ├── DataExport.jsx         # CSV / JSON download of real history
+│           ├── Profile.jsx            # Account settings — pre-filled from backend
+│           ├── DashboardSettings.jsx  # Preferences — UPSERT to user_settings table
+│           ├── Support.jsx            # Feedback form → support_tickets table
+│           └── Admin.jsx              # Admin panel — real users, real flagged content
+│
+├── .env                               # DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY, JWT_SECRET_KEY
+├── pyproject.toml                     # Python dependencies
+└── README.md
 ```
 
 ---
 
-## Database Tables
+## Database Schema (8 Tables)
 
-| Table | Purpose |
-|---|---|
-| `users` | Auth — name, email, password_hash, role, bio, location, website |
-| `analysis_history` | Every saved analysis result |
-| `activities` | Activity log (login, analysis events) |
-| `alerts` | Auto-generated when toxicity > 50% |
-| `user_settings` | Per-user dashboard settings (UPSERT) |
-| `contact_messages` | Public contact form submissions |
-| `support_tickets` | Authenticated user support tickets |
-| `user_api_keys` | Generated API keys per user |
+| Table | Columns | Purpose |
+|---|---|---|
+| `users` | id, name, email, password_hash, role, bio, location, website, created_at, updated_at | User accounts and profiles |
+| `analysis_history` | id, user_id, input_text, toxicity_score, cyberbullying_prob, result_sarcasm, sentiment, tweet_url, created_at | Every saved analysis result |
+| `alerts` | id, user_id, alert_type, content, severity, is_read, created_at | Auto-created when toxicity/cyberbullying > 50% |
+| `activities` | id, user_id, activity_type, description, metadata, created_at | User activity log |
+| `user_settings` | id, user_id, theme, notifications_enabled, email_alerts, auto_save, privacy_mode, analysis_threshold, … | Per-user dashboard preferences |
+| `contact_messages` | id, name, email, subject, message, category, created_at | Public contact form submissions |
+| `support_tickets` | id, user_id, title, description, type, priority, category, status, created_at | Authenticated support requests |
+| `user_api_keys` | id, user_id, name, key_value, environment, status, calls_count, last_used_at, created_at | API keys for integrations |
+
+The database is **auto-initialised** on backend startup. `init_db()` uses `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` so existing data is never lost when the schema evolves.
 
 ---
 
@@ -107,103 +148,197 @@ cyberbulling/
 ### Auth
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/signup` | — | Register new user |
-| POST | `/login` | — | Login, returns JWT |
-| GET | `/user` | JWT | Get current user |
-| POST | `/profile/update` | JWT | Update name/bio/location/website |
-| POST | `/password/update` | JWT | Change password |
+| `POST` | `/signup` | — | Register — returns JWT + user object |
+| `POST` | `/login` | — | Login — returns JWT + user object |
+| `GET` | `/user` | JWT | Get current user's full profile |
+| `POST` | `/profile/update` | JWT | Update name, bio, location, website |
+| `POST` | `/password/update` | JWT | Verify current password, set new one |
+| `GET` | `/health` | — | Backend health check |
 
 ### Analysis
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/analyze` | — | Analyze text for toxicity/cyberbullying/sentiment/sarcasm |
+| `POST` | `/analyze` | — | Analyze text → toxicity, cyberbullying, sentiment, sarcasm |
 
 ### History
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/history/add` | JWT | Save analysis result (auto-creates alert if toxic) |
-| GET | `/history/<user_id>` | JWT | Fetch user's history |
+| `POST` | `/history/add` | JWT | Save result + auto-create alert if toxic |
+| `GET` | `/history/<user_id>` | JWT | Fetch history (own only; admin sees all) |
+| `DELETE` | `/history/delete/<id>` | JWT | Delete one item (ownership enforced) |
 
-### Activity & Alerts
+### Alerts & Activity
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/activity/<user_id>` | JWT | User activities |
-| POST | `/activity/log` | JWT | Log an activity |
-| GET | `/alerts/<user_id>` | JWT | User alerts (generated on toxic saves) |
+| `GET` | `/alerts/<user_id>` | JWT | Real alerts from `alerts` table |
+| `GET` | `/activity/<user_id>` | JWT | Activity log |
+| `POST` | `/activity/log` | JWT | Record an activity |
 
 ### Settings
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/settings/save` | JWT | Save all settings to DB (UPSERT) |
-| GET | `/settings/get` | JWT | Load settings (returns defaults if none) |
+| `GET` | `/settings/get` | JWT | Load saved settings (returns defaults if none) |
+| `POST` | `/settings/save` | JWT | UPSERT all settings to `user_settings` |
 
 ### Contact
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/contact/send` | — | Public contact form → `contact_messages` |
-| POST | `/contact/support/ticket` | JWT | Support ticket → `support_tickets` |
+| `POST` | `/contact/send` | — | Public form → `contact_messages` table |
+| `POST` | `/contact/support/ticket` | JWT | Support ticket → `support_tickets` table |
 
 ### API Keys
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/apikeys` | JWT | List user's API keys |
-| POST | `/apikeys` | JWT | Create new key |
-| DELETE | `/apikeys/<id>` | JWT | Delete key |
-| POST | `/apikeys/<id>/regenerate` | JWT | Regenerate key value |
+| `GET` | `/apikeys` | JWT | List all keys for current user |
+| `POST` | `/apikeys` | JWT | Create key (random `sk_live_` or `sk_test_` prefix) |
+| `DELETE` | `/apikeys/<id>` | JWT | Delete key |
+| `POST` | `/apikeys/<id>/regenerate` | JWT | Issue new key value, same name/env |
 
-### Admin
+### Admin *(role = admin required)*
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/admin/users` | JWT+Admin | All users |
-| GET | `/admin/history` | JWT+Admin | All history |
-| DELETE | `/admin/user/<id>` | JWT+Admin | Delete user |
+| `GET` | `/admin/users` | JWT + Admin | All registered users |
+| `GET` | `/admin/history` | JWT + Admin | All analysis history with user info |
+| `DELETE` | `/admin/user/<id>` | JWT + Admin | Delete user + cascade all their data |
 
 ---
 
 ## Running the Project
 
-```bash
-# Terminal 1 — Backend (port 8000)
-python main.py
+### Prerequisites
+- Python 3.11+, Node.js 18+
+- A Supabase project with PostgreSQL (or any PostgreSQL instance)
 
-# Terminal 2 — Frontend (port 5173)
-cd frontend
-npm run dev
-```
+### Environment Setup
 
-Create a `.env` at the project root:
-```
-DATABASE_URL=postgresql://...supabase.com:5432/postgres
-SUPABASE_URL=https://your-project.supabase.co
+Create `.env` in the project root:
+```env
+DATABASE_URL=postgresql://postgres.<ref>:<password>@aws-<region>.pooler.supabase.com:5432/postgres
+SUPABASE_URL=https://<ref>.supabase.co
 SUPABASE_ANON_KEY=eyJ...
-JWT_SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=<generate-a-long-random-string>
+```
+
+Create `frontend/.env.local`:
+```env
+VITE_SUPABASE_URL=https://<ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+```
+
+### Start Backend
+```bash
+# Activate the virtual environment
+.venv\Scripts\activate          # Windows
+source .venv/bin/activate       # macOS / Linux
+
+# Install dependencies (first time only)
+pip install flask flask-jwt-extended psycopg2-binary python-dotenv bcrypt requests flask-cors
+
+# Run (tables are created automatically on first start)
+python main.py
+# → Listening on http://0.0.0.0:8000
+```
+
+### Start Frontend
+```bash
+cd frontend
+npm install          # first time only
+npm run dev
+# → http://localhost:5000
 ```
 
 ---
 
-## Current Classifier Status
+## Dashboard Features
 
-The active classifier (`backend/utils/classifier.py`) is a **rule-based keyword model** used temporarily.
+All 14 dashboard tabs use real database data — no mock values anywhere.
 
-**BERT model integration is planned for the next session** — see `backend/utils/classifier_template_bert.py` for the integration template. Once the trained model is ready, swap `classify_text()` in `classifier.py` with the BERT version and the rest of the system requires no changes.
+| Tab | Data Source | Key Features |
+|---|---|---|
+| **Analyze Text** | `POST /analyze` + `POST /history/add` | Real-time scoring, PDF export, auto-save to history |
+| **Analysis History** | `GET /history/<id>` | Sort by date/toxicity, filter by sentiment/safety, CSV export, delete |
+| **Statistics** | `GET /history/<id>` | 7d / 30d / 90d / all-time filter, dynamic insights, sentiment breakdown |
+| **Reports** | `GET /history/<id>` | Auto-groups by week or month, view modal, CSV download per report |
+| **Alerts** | `GET /alerts/<id>` | Auto-created on save when toxicity >50%, unread badges, severity levels |
+| **Activity Feed** | `GET /history/<id>` | Timeline of all analyses with toxicity indicators |
+| **Trending Topics** | `GET /history/<id>` | Regex pattern detection, real trend % vs previous period, time filter |
+| **API Management** | `/apikeys` CRUD | Create, delete, regenerate keys — persisted to `user_api_keys` table |
+| **Content Review** | `GET /history/<id>` | Moderation queue, approve/reject, computed detection rate |
+| **Advanced Search** | `GET /history/<id>` | Keyword search, severity, date range, sentiment filter, export |
+| **Data Export** | `GET /history/<id>` | CSV and JSON download, configurable date range |
+| **Profile Settings** | `GET /user` + `POST /profile/update` | Pre-filled from backend, updates name/bio/location/website |
+| **Dashboard Settings** | `/settings/get` + `/settings/save` | UPSERT to `user_settings` — persists across sessions |
+| **Support & Feedback** | `POST /contact/support/ticket` | Saves to `support_tickets` table in DB |
+
+### Admin Panel *(admin role required)*
+- **Overview** — real content breakdown chart + live recent activity feed
+- **Flagged Content** — all toxic submissions across all users, sorted by score
+- **Users** — full user list with analysis counts, flagged counts, join date, delete button
 
 ---
 
-## Dashboard Features (All Functional)
+## AI Classifier
 
-| Tab | Data Source | Status |
-|---|---|---|
-| Analyze Text | Backend `/analyze` + `/history/add` | Real |
-| Analysis History | Supabase `analysis_history` | Real |
-| Statistics | Supabase `analysis_history` + time filter | Real |
-| Reports | Grouped by week from Supabase | Real |
-| Alerts | Auto-created on toxic saves, from `alerts` table | Real |
-| Activity Feed | Derived from `analysis_history` | Real |
-| Trending Topics | Pattern analysis on history + time filter | Real |
-| API Management | Backend CRUD on `user_api_keys` table | Real |
-| Content Review | Moderation queue from history | Real |
-| Advanced Search | Full-text search with filters on history | Real |
-| Data Export | CSV/JSON download from Supabase | Real |
-| Profile Settings | Loads from `/user` endpoint | Real |
-| Dashboard Settings | Persisted to `user_settings` table | Real |
-| Support & Feedback | Saves to `support_tickets` table | Real |
+### Current (Active)
+`backend/utils/classifier.py` — a rule-based keyword classifier used during development.
+
+**Output format:**
+```json
+{
+  "toxicity_score": 0.72,
+  "cyberbullying_prob": 0.65,
+  "sarcasm": false,
+  "sentiment": "negative"
+}
+```
+
+### Planned — BERT Integration
+`backend/utils/classifier_template_bert.py` contains the ready-to-use integration template.
+
+**To swap in the trained model:**
+1. Place the trained model in `backend/utils/model/`
+2. Copy the `classify_text()` function from `classifier_template_bert.py` into `classifier.py`
+3. Restart the backend — no other changes needed
+
+The rest of the system (routes, controllers, frontend) is model-agnostic.
+
+---
+
+## Authentication Flow
+
+```
+User → POST /signup (name, email, password)
+     ← { access_token, user: { id, name, email, role } }
+
+User → POST /login (email, password)
+     ← { access_token, user: { id, name, email, role } }
+
+All protected routes:
+     → Header: Authorization: Bearer <access_token>
+```
+
+Tokens are stored in `localStorage` and automatically attached by the Axios request interceptor. A 401 response clears the token and redirects to `/login`.
+
+---
+
+## Security Notes
+
+- Passwords are hashed with **bcrypt** (cost factor 12)
+- JWT tokens expire after **7 days**
+- All protected routes validate the JWT before processing
+- History deletion checks ownership — users can only delete their own records
+- Admin routes check `role = 'admin'` before returning cross-user data
+- CORS is configured to accept requests from `localhost:5000` / `localhost:5173`
+
+---
+
+## Branch Strategy
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production-ready releases |
+| `dev2` | Active development — current work |
+
+---
+
+*Built with React + Flask + PostgreSQL · Final Year Project 2026*
