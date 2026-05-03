@@ -6,3 +6,7 @@ from backend.routes.activity import activity_bp
 from backend.routes.settings import settings_bp
 from backend.routes.contact import contact_bp
 from backend.routes.api_keys import api_keys_bp
+from backend.routes.twitter import twitter_bp
+from backend.routes.victims import victims_bp
+from backend.routes.trends import trends_bp
+from backend.routes.prediction import prediction_bp

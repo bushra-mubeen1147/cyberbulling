@@ -50,6 +50,16 @@ export const adminAPI = {
   getUsers: () => api.get('/admin/users'),
   getHistory: () => api.get('/admin/history'),
   deleteUser: (userId) => api.delete(`/admin/user/${userId}`),
+  getStats: () => api.get('/admin/stats'),
+  getAnalytics: (days = 7) => api.get(`/admin/analytics?days=${days}`),
+  getUserDetails: (userId) => api.get(`/admin/user/${userId}/details`),
+  sendNotification: (data) => api.post('/admin/notifications/send', data),
+  getNotifications: () => api.get('/admin/notifications'),
+  deleteNotification: (id) => api.delete(`/admin/notification/${id}`),
+  changeUserRole: (userId, data) => api.patch(`/admin/user/${userId}/role`, data),
+  getReports: () => api.get('/admin/reports'),
+  updateTicketStatus: (ticketId, data) => api.patch(`/admin/ticket/${ticketId}/status`, data),
+  deleteHistoryItem: (id) => api.delete(`/admin/history/${id}`),
 };
 
 export const activityAPI = {
@@ -69,6 +79,11 @@ export const contactAPI = {
 
 export const alertsAPI = {
   getByUserId: (userId) => api.get(`/alerts/${userId}`),
+  markAllRead: () => api.post('/alerts/mark-read'),
+};
+
+export const userAnalyticsAPI = {
+  get: () => api.get('/user/analytics'),
 };
 
 export const apiKeysAPI = {
@@ -76,6 +91,27 @@ export const apiKeysAPI = {
   create: (data) => api.post('/apikeys', data),
   delete: (id) => api.delete(`/apikeys/${id}`),
   regenerate: (id) => api.post(`/apikeys/${id}/regenerate`),
+};
+
+export const twitterAPI = {
+  analyzeUrl: (url) => api.post('/twitter/analyze', { url }),
+};
+
+export const trendsAPI = {
+  getLive: (location = 'worldwide') => api.get(`/trends?location=${location}`),
+  getLocations: () => api.get('/trends/locations'),
+};
+
+export const predictionAPI = {
+  getForVictim: (victimId) => api.get(`/predictions/victim/${victimId}`),
+};
+
+export const victimAPI = {
+  add: (data) => api.post('/victims', data),
+  list: () => api.get('/victims'),
+  remove: (id) => api.delete(`/victims/${id}`),
+  getTweets: (id) => api.get(`/victims/${id}/tweets`),
+  checkTweets: (id) => api.post(`/victims/${id}/check`),
 };
 
 export default api;

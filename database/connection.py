@@ -183,10 +183,38 @@ def init_db():
             )
         ''')
 
+        # Create monitored_profiles table (victim monitoring feature)
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS monitored_profiles (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                twitter_username VARCHAR(255) NOT NULL,
+                display_name VARCHAR(255),
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_checked_at TIMESTAMP,
+                UNIQUE(user_id, twitter_username)
+            )
+        ''')
+
+        # Create admin_notifications table (tracks notifications sent by admins)
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS admin_notifications (
+                id SERIAL PRIMARY KEY,
+                sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                recipient_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                title VARCHAR(500) NOT NULL,
+                message TEXT NOT NULL,
+                type VARCHAR(50) DEFAULT 'info',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # Create indexes
         cur.execute('CREATE INDEX IF NOT EXISTS idx_analysis_user ON analysis_history(user_id)')
         cur.execute('CREATE INDEX IF NOT EXISTS idx_activities_user ON activities(user_id)')
         cur.execute('CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_monitored_profiles_user ON monitored_profiles(user_id)')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_admin_notifs_recipient ON admin_notifications(recipient_id)')
 
         conn.commit()
         cur.close()

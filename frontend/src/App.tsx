@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
-import Analyze from './pages/Analyze';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import History from './pages/History';
@@ -15,16 +14,14 @@ import Services from './pages/Services.jsx';
 import Contact from './pages/Contact.jsx';
 import Admin from './pages/Admin.jsx';
 import Statistics from './pages/Statistics.jsx';
-import Reports from './pages/Reports.jsx';
-import Alerts from './pages/Alerts.jsx';
-import DashboardSettings from './pages/DashboardSettings.jsx';
 import Support from './pages/Support.jsx';
 import ActivityFeed from './pages/ActivityFeed.jsx';
 import TrendingTopics from './pages/TrendingTopics.jsx';
-import APIManagement from './pages/APIManagement.jsx';
 import ContentReview from './pages/ContentReview.jsx';
-import AdvancedSearch from './pages/AdvancedSearch.jsx';
 import DataExport from './pages/DataExport.jsx';
+import TwitterAnalysis from './pages/TwitterAnalysis.jsx';
+import VictimMonitoring from './pages/VictimMonitoring.jsx';
+import BehaviorPrediction from './pages/BehaviorPrediction.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -71,24 +68,20 @@ function App() {
           <Route path="/services" element={<Services darkMode={darkMode} />} />
           <Route path="/contact" element={<Contact darkMode={darkMode} />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard darkMode={darkMode} /></ProtectedRoute>}>
-            <Route path="analyze" element={<Analyze darkMode={darkMode} />} />
             <Route path="history" element={<History darkMode={darkMode} />} />
             <Route path="profile" element={<Profile darkMode={darkMode} />} />
             <Route path="statistics" element={<Statistics darkMode={darkMode} />} />
-            <Route path="reports" element={<Reports darkMode={darkMode} />} />
-            <Route path="alerts" element={<Alerts darkMode={darkMode} />} />
-            <Route path="settings" element={<DashboardSettings darkMode={darkMode} />} />
             <Route path="support" element={<Support darkMode={darkMode} />} />
             <Route path="activity" element={<ActivityFeed darkMode={darkMode} />} />
             <Route path="trending" element={<TrendingTopics darkMode={darkMode} />} />
-            <Route path="api" element={<APIManagement darkMode={darkMode} />} />
+
             <Route path="review" element={<ContentReview darkMode={darkMode} />} />
-            <Route path="search" element={<AdvancedSearch darkMode={darkMode} />} />
             <Route path="export" element={<DataExport darkMode={darkMode} />} />
+            <Route path="twitter" element={<TwitterAnalysis darkMode={darkMode} />} />
+            <Route path="victims" element={<VictimMonitoring darkMode={darkMode} />} />
+            <Route path="predictions" element={<BehaviorPrediction darkMode={darkMode} />} />
           </Route>
           <Route path="/admin" element={<ProtectedRoute isAdmin={true}><Admin darkMode={darkMode} /></ProtectedRoute>} />
-          {/* Optional non-nested routes */}
-          <Route path="/analyze" element={<ProtectedRoute><Analyze darkMode={darkMode} /></ProtectedRoute>} />
           <Route path="/login" element={<Login darkMode={darkMode} setUser={setUser} />} />
           <Route path="/signup" element={<Signup darkMode={darkMode} setUser={setUser} />} />
           <Route path="/history" element={<ProtectedRoute><History darkMode={darkMode} /></ProtectedRoute>} />

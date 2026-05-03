@@ -247,6 +247,14 @@ npm run dev
 # → http://localhost:5000
 ```
 
+### Deploy on Vercel
+This project should be deployed as a frontend app on Vercel. The Flask backend must be hosted separately and exposed over HTTPS.
+
+1. In Vercel, create or reconnect the project from the repository root.
+2. Use the root build command `npm run build`; it delegates to the `frontend/` workspace and outputs to `frontend/dist`.
+3. Add an environment variable named `VITE_API_BASE_URL` that points to your deployed backend API URL.
+4. Deploy the project. Client-side routes are handled by the root `vercel.json`.
+
 ---
 
 ## Dashboard Features

@@ -4,7 +4,8 @@ from backend.config import Config
 from database.connection import init_db
 from backend.routes import (
     auth_bp, analysis_bp, history_bp, admin_bp,
-    activity_bp, settings_bp, contact_bp, api_keys_bp
+    activity_bp, settings_bp, contact_bp, api_keys_bp, twitter_bp, victims_bp, trends_bp,
+    prediction_bp,
 )
 import os
 
@@ -54,6 +55,10 @@ def create_app():
     app.register_blueprint(settings_bp,  url_prefix='/settings')
     app.register_blueprint(contact_bp,   url_prefix='/contact')
     app.register_blueprint(api_keys_bp)
+    app.register_blueprint(twitter_bp)
+    app.register_blueprint(victims_bp)
+    app.register_blueprint(trends_bp)
+    app.register_blueprint(prediction_bp)
 
     @app.route('/health', methods=['GET'])
     def health_check():

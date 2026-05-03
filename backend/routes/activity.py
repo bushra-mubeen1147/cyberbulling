@@ -24,3 +24,13 @@ def log_activity():
 @jwt_required()
 def get_user_alerts(user_id):
     return ActivityController.get_user_alerts(user_id)
+
+@activity_bp.route('/alerts/mark-read', methods=['POST'])
+@jwt_required()
+def mark_alerts_read():
+    return ActivityController.mark_all_alerts_read()
+
+@activity_bp.route('/user/analytics', methods=['GET'])
+@jwt_required()
+def get_user_analytics():
+    return ActivityController.get_user_analytics()

@@ -1,4 +1,5 @@
-// Backend always runs on port 8000.
-// Vite dev server runs on port 5000 (see vite.config.ts).
-// Both point to the same backend URL.
-export const API_BASE_URL = 'http://127.0.0.1:8000';
+const productionBackendUrl = 'https://backend-vercel-wheat.vercel.app';
+
+export const API_BASE_URL =
+	import.meta.env.VITE_API_BASE_URL ||
+	(import.meta.env.DEV ? 'http://127.0.0.1:8000' : productionBackendUrl);

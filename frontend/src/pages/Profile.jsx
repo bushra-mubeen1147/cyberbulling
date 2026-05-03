@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Bell, 
-  Lock, 
-  Trash2, 
-  Save, 
+import {
+  User,
+  Mail,
+  Shield,
+  Bell,
+  Lock,
+  Trash2,
+  Save,
   Camera,
   Eye,
   EyeOff,
@@ -17,14 +18,23 @@ import {
   Globe,
   Smartphone,
   Download,
-  Upload
+  Upload,
+  Sliders,
+  Zap,
+  RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
 import { authAPI, settingsAPI, historyAPI } from '../api/api.js';
 
+const VALID_TABS = ['account', 'security', 'notifications', 'privacy', 'app'];
+
 export default function Profile({ darkMode }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('account');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = searchParams.get('tab');
+    return VALID_TABS.includes(t) ? t : 'account';
+  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [stats, setStats] = useState({ totalAnalyses: 0, flaggedContent: 0, lastActive: null });
@@ -87,6 +97,21 @@ export default function Profile({ darkMode }) {
     dataRetention: '90days'
   });
 
+  // App / Dashboard Settings State
+  const DEFAULT_APP_SETTINGS = {
+    emailNotifications: true,
+    pushNotifications: true,
+    weeklyReports: false,
+    criticalAlerts: true,
+    analysisAutoSave: true,
+    privacyMode: false,
+    dataCollection: true,
+    apiRateLimit: 'standard',
+    analysisThreshold: 'medium',
+  };
+  const [appSettings, setAppSettings] = useState(DEFAULT_APP_SETTINGS);
+  const [appSaveMsg, setAppSaveMsg] = useState('');
+
   // Fetch user stats via backend API
   useEffect(() => {
     const fetchStats = async () => {
@@ -108,6 +133,49 @@ export default function Profile({ darkMode }) {
     };
     fetchStats();
   }, [user?.id]);
+
+  // Load app settings from backend
+  useEffect(() => {
+    settingsAPI.get()
+      .then(res => {
+        const s = res.data?.data || {};
+        setAppSettings({
+          emailNotifications: s.notifications_enabled ?? true,
+          pushNotifications:  s.push_notifications   ?? true,
+          weeklyReports:      s.weekly_reports        ?? false,
+          criticalAlerts:     s.email_alerts          ?? true,
+          analysisAutoSave:   s.auto_save             ?? true,
+          privacyMode:        s.privacy_mode          ?? false,
+          dataCollection:     s.data_collection       ?? true,
+          apiRateLimit:       s.api_rate_limit        ?? 'standard',
+          analysisThreshold:  s.analysis_threshold    ?? 'medium',
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleAppSettingsSave = async () => {
+    try {
+      await settingsAPI.save({
+        notifications_enabled: appSettings.emailNotifications,
+        push_notifications:    appSettings.pushNotifications,
+        weekly_reports:        appSettings.weeklyReports,
+        email_alerts:          appSettings.criticalAlerts,
+        auto_save:             appSettings.analysisAutoSave,
+        privacy_mode:          appSettings.privacyMode,
+        data_collection:       appSettings.dataCollection,
+        api_rate_limit:        appSettings.apiRateLimit,
+        analysis_threshold:    appSettings.analysisThreshold,
+      });
+      setAppSaveMsg('Settings saved!');
+      setTimeout(() => setAppSaveMsg(''), 3000);
+    } catch {
+      setAppSaveMsg('Failed to save settings.');
+      setTimeout(() => setAppSaveMsg(''), 3000);
+    }
+  };
+
+  const handleAppSettingsReset = () => setAppSettings(DEFAULT_APP_SETTINGS);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -227,10 +295,11 @@ export default function Profile({ darkMode }) {
   }
 
   const tabs = [
-    { id: 'account', label: 'Account', icon: User },
-    { id: 'security', label: 'Security', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Shield }
+    { id: 'account',       label: 'Account',       icon: User },
+    { id: 'security',      label: 'Security',       icon: Lock },
+    { id: 'notifications', label: 'Notifications',  icon: Bell },
+    { id: 'privacy',       label: 'Privacy',        icon: Shield },
+    { id: 'app',           label: 'App Settings',   icon: Sliders },
   ];
 
   return (
@@ -863,6 +932,158 @@ export default function Profile({ darkMode }) {
                         <Save className="w-5 h-5" />
                         <span>{loading ? 'Saving...' : 'Save Privacy Settings'}</span>
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* App Settings Tab */}
+                {activeTab === 'app' && (
+                  <div>
+                    <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      App Settings
+                    </h2>
+
+                    {appSaveMsg && (
+                      <div className={`mb-5 p-3 rounded-lg text-sm font-medium ${
+                        appSaveMsg.includes('Failed')
+                          ? darkMode ? 'bg-red-900/20 border border-red-800 text-red-300' : 'bg-red-50 border border-red-300 text-red-700'
+                          : darkMode ? 'bg-green-900/20 border border-green-800 text-green-300' : 'bg-green-50 border border-green-300 text-green-700'
+                      }`}>
+                        {appSaveMsg}
+                      </div>
+                    )}
+
+                    <div className="space-y-6">
+                      {/* Notifications section */}
+                      <div className={`p-5 rounded-xl border ${darkMode ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Bell className="w-5 h-5 text-blue-500" />
+                          <h3 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            { key: 'emailNotifications', label: 'Email Notifications',  desc: 'Receive analysis updates via email' },
+                            { key: 'pushNotifications',  label: 'Push Notifications',   desc: 'Get instant alerts on your device' },
+                            { key: 'weeklyReports',      label: 'Weekly Reports',        desc: 'Receive weekly summaries' },
+                            { key: 'criticalAlerts',     label: 'Critical Alerts Only',  desc: 'Only notify for critical threats' },
+                          ].map(({ key, label, desc }) => (
+                            <label key={key} className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'} transition-colors`}>
+                              <span>
+                                <p className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{label}</p>
+                                <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{desc}</p>
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={appSettings[key]}
+                                onChange={() => setAppSettings(prev => ({ ...prev, [key]: !prev[key] }))}
+                                className="w-5 h-5 rounded cursor-pointer"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Analysis section */}
+                      <div className={`p-5 rounded-xl border ${darkMode ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Zap className="w-5 h-5 text-purple-500" />
+                          <h3 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Analysis</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <label className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'} transition-colors`}>
+                            <span>
+                              <p className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Auto-Save Analysis</p>
+                              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Automatically save all analyses</p>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={appSettings.analysisAutoSave}
+                              onChange={() => setAppSettings(prev => ({ ...prev, analysisAutoSave: !prev.analysisAutoSave }))}
+                              className="w-5 h-5 rounded cursor-pointer"
+                            />
+                          </label>
+                          <div className={`p-3 rounded-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              Sensitivity Threshold
+                            </label>
+                            <select
+                              value={appSettings.analysisThreshold}
+                              onChange={(e) => setAppSettings(prev => ({ ...prev, analysisThreshold: e.target.value }))}
+                              className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm`}
+                            >
+                              <option value="low">Low (More sensitive)</option>
+                              <option value="medium">Medium (Balanced)</option>
+                              <option value="high">High (Less sensitive)</option>
+                            </select>
+                            <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Adjust how strict the toxicity detection should be</p>
+                          </div>
+                          <div className={`p-3 rounded-lg border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              API Rate Limit
+                            </label>
+                            <select
+                              value={appSettings.apiRateLimit}
+                              onChange={(e) => setAppSettings(prev => ({ ...prev, apiRateLimit: e.target.value }))}
+                              className={`w-full px-3 py-2 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm`}
+                            >
+                              <option value="free">Free Tier (100/month)</option>
+                              <option value="standard">Standard (1000/month)</option>
+                              <option value="premium">Premium (Unlimited)</option>
+                            </select>
+                            <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Control how many analyses you can run per month</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Privacy & Security section */}
+                      <div className={`p-5 rounded-xl border ${darkMode ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Lock className="w-5 h-5 text-green-500" />
+                          <h3 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Privacy & Security</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {[
+                            { key: 'privacyMode',    label: 'Privacy Mode',         desc: 'Hide sensitive content in UI' },
+                            { key: 'dataCollection', label: 'Allow Data Collection', desc: 'Help improve our AI models' },
+                          ].map(({ key, label, desc }) => (
+                            <label key={key} className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'} transition-colors`}>
+                              <span>
+                                <p className={`font-medium text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{label}</p>
+                                <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{desc}</p>
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={appSettings[key]}
+                                onChange={() => setAppSettings(prev => ({ ...prev, [key]: !prev[key] }))}
+                                className="w-5 h-5 rounded cursor-pointer"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        <div className={`mt-4 p-3 rounded-lg ${darkMode ? 'bg-yellow-900/20 border border-yellow-800/30' : 'bg-yellow-50 border border-yellow-200'}`}>
+                          <p className={`text-xs ${darkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>
+                            Your data is encrypted end-to-end and never shared with third parties.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleAppSettingsSave}
+                          className="flex items-center gap-2 flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                        >
+                          <Save className="w-5 h-5" />
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={handleAppSettingsReset}
+                          className={`flex items-center gap-2 flex-1 px-6 py-3 rounded-lg font-semibold transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'}`}
+                        >
+                          <RotateCcw className="w-5 h-5" />
+                          Reset to Default
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

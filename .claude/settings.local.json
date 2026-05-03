@@ -1,7 +1,33 @@
 {
   "permissions": {
     "allow": [
-      "Bash(.venv/Scripts/python.exe main.py)"
+      "Bash(.venv/Scripts/python.exe main.py)",
+      "Bash(uv add *)",
+      "Bash(.venv\\\\Scripts\\\\pip install *)",
+      "Bash(python -m pip install tweepy)",
+      "Bash(python -c \"import tweepy; print\\('tweepy', tweepy.__version__\\); from backend.utils.twitter_fetcher import parse_twitter_url; print\\(parse_twitter_url\\('https://twitter.com/elonmusk/status/1234567890'\\)\\); print\\(parse_twitter_url\\('https://x.com/elonmusk'\\)\\)\")",
+      "Bash(uv run *)",
+      "Bash(dir \"c:\\\\Users\\\\FN TRADERS\\\\Desktop\\\\Cyberbulling\\\\cyberbulling\\\\.venv\\\\Lib\\\\site-packages\\\\tweepy\")",
+      "Bash(\"c:\\\\Users\\\\FN TRADERS\\\\Desktop\\\\Cyberbulling\\\\cyberbulling\\\\.venv\\\\Scripts\\\\python.exe\" -m pip install tweepy)",
+      "Bash(\"c:\\\\Users\\\\FN TRADERS\\\\Desktop\\\\Cyberbulling\\\\cyberbulling\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import tweepy; print\\('OK', tweepy.__version__\\)\")",
+      "Bash('c:\\\\Users\\\\FN TRADERS\\\\Desktop\\\\Cyberbulling\\\\cyberbulling\\\\.venv\\\\Scripts\\\\python.exe' -c ' *)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/twitter/analyze -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\": \\\\\"https://twitter.com/elonmusk/status/1234567890\\\\\"}\")",
+      "Bash(curl -s http://127.0.0.1:8000/health)",
+      "Bash(start \"SafeText Backend\" cmd /c \"uv run python main.py > backend_log.txt 2>&1\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/twitter/analyze -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\": \\\\\"https://twitter.com/twitter\\\\\"}\")",
+      "Bash(pkill -f \"python main.py\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/twitter/analyze -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\": \\\\\"https://twitter.com/elonmusk\\\\\"}\")",
+      "Bash(curl -s -H \"Authorization: Bearer AAAAAAAAAAAAAAAAAAAAAF723AEAAAAAGXe4d1cVz58Ews4nYo2PzcBqB2o=0dpnac06kNNI3SmXQo3Z9FEjU61tkRSxXRSNclxZ9N6mlOFyFD\" \"https://api.twitter.com/2/users/by/username/twitter\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"Authorization: Bearer AAAAAAAAAAAAAAAAAAAAAF723AEAAAAAGXe4d1cVz58Ews4nYo2PzcBqB2o=0dpnac06kNNI3SmXQo3Z9FEjU61tkRSxXRSNclxZ9N6mlOFyFD\" \"https://api.twitter.com/2/users/by/username/twitter\")",
+      "PowerShell(Get-Process -Name python -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/twitter/analyze -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\": \\\\\"https://twitter.com/elonmusk/status/1614271736831647748\\\\\"}\")",
+      "Bash(curl -s \"https://publish.twitter.com/oembed?url=https://twitter.com/elonmusk/status/1614271736831647748&omit_script=true\")",
+      "Bash(curl -s \"https://publish.twitter.com/oembed?url=https://x.com/NASA/status/1614636370659692545&omit_script=true\")",
+      "Bash(curl -s \"https://publish.twitter.com/oembed?url=https://x.com/Twitter/status/20\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/twitter/analyze -H \"Content-Type: application/json\" -d \"{\\\\\"url\\\\\": \\\\\"https://twitter.com/jack/status/20\\\\\"}\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\FN TRADERS\\\\Desktop\\\\Cyberbulling\\\\cyberbulling\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }
