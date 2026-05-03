@@ -160,7 +160,14 @@ export default function ContentReview({ darkMode }) {
           { label: 'Pending', count: queue.filter(q => q.status === 'pending').length, icon: Clock, color: 'from-blue-500 to-blue-600' },
           { label: 'Approved', count: queue.filter(q => q.status === 'approved').length, icon: CheckCircle, color: 'from-green-500 to-green-600' },
           { label: 'Rejected', count: queue.filter(q => q.status === 'rejected').length, icon: XCircle, color: 'from-red-500 to-red-600' },
-          { label: 'Accuracy Rate', count: '94%', icon: Flag, color: 'from-purple-500 to-purple-600' }
+          {
+            label: 'Detection Rate',
+            count: queue.length > 0
+              ? `${Math.round((queue.filter(q => q.severity !== 'low').length / queue.length) * 100)}%`
+              : '0%',
+            icon: Flag,
+            color: 'from-purple-500 to-purple-600'
+          }
         ].map((stat, idx) => {
           const Icon = stat.icon;
           return (
