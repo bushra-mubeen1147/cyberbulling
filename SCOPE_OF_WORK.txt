@@ -1,0 +1,133 @@
+SAFE TEXT AI - SCOPE OF WORK
+
+This document describes what the system can do on the public, user, and admin sides, and how those parts interact.
+
+1. Purpose
+
+Safe Text AI is a web application for detecting cyberbullying, toxicity, sarcasm, and sentiment in text. It also supports Twitter-based analysis, victim monitoring, trend lookup, reports, alerts, API key management, support requests, and admin oversight.
+
+2. Public Side
+
+Public users can:
+- Visit the home, about, services, and contact pages.
+- Create an account through signup.
+- Log in to access the protected dashboard.
+- Send a public contact message without authentication.
+- Submit a Twitter URL for analysis through the public Twitter analysis endpoint.
+
+Public pages are informational and conversion-focused. They lead users into authentication or contact actions.
+
+3. User Side
+
+After login, a normal user can access the dashboard and protected features.
+
+User capabilities:
+- Analyze pasted text for toxicity, cyberbullying probability, sentiment, and sarcasm.
+- Save analysis results to personal history.
+- View, filter, sort, export, and delete their own history.
+- View automatic alerts created from high-risk analysis results.
+- View activity feed and activity logs.
+- Manage profile details such as name, bio, location, and website.
+- Update password.
+- Save and load personal dashboard settings.
+- Submit support tickets.
+- Create, list, delete, and regenerate API keys for external integrations.
+- View statistics, reports, trending topics, content review results, and data exports.
+- Access Twitter analysis, victim monitoring, and behavior prediction tools.
+
+User interaction flow:
+- The user logs in and receives a JWT token.
+- The frontend stores the token and user data locally.
+- Protected routes send the token in API requests.
+- Analysis results can be stored in history.
+- High-risk results can trigger alerts.
+- Dashboard pages read data back from the database through backend APIs.
+
+4. Admin Side
+
+Admins use the same login system, but the protected admin route requires an admin role.
+
+Admin capabilities:
+- View all registered users.
+- View all analysis history across the system.
+- Delete users and their related data.
+- View platform stats and analytics.
+- View details for any user.
+- View, send, and delete notifications.
+- Change a user role.
+- View reports.
+- Update support ticket status.
+- Delete history items globally.
+
+Admin interaction flow:
+- The admin logs in with an account that has the admin role.
+- The admin panel loads platform-wide data instead of only personal data.
+- The admin can review users, flagged content, reports, and tickets.
+- Admin actions update the backend database and affect what users see later.
+
+5. Data And Backend Flow
+
+The system uses PostgreSQL tables to keep data persistent.
+
+Main stored data includes:
+- users
+- analysis_history
+- alerts
+- activities
+- user_settings
+- contact_messages
+- support_tickets
+- user_api_keys
+
+How the parts connect:
+- Auth creates and verifies user sessions.
+- Analysis generates scores and results.
+- History stores completed analysis items.
+- Alerts are created when content crosses the risk threshold.
+- Activity logging records user actions.
+- Settings save dashboard preferences per user.
+- Contact and support requests are stored in the database.
+- API keys are generated and managed per user.
+- Admin routes read and manage cross-user platform data.
+
+6. Main User And Admin Pages
+
+Public pages:
+- Home
+- About
+- Services
+- Contact
+- Login
+- Signup
+
+User dashboard pages:
+- Dashboard
+- Analyze
+- History
+- Statistics
+- Reports
+- Alerts
+- Activity Feed
+- Trending Topics
+- Content Review
+- Data Export
+- Profile
+- Dashboard Settings
+- Support
+- API Management
+- Twitter Analysis
+- Victim Monitoring
+- Behavior Prediction
+
+Admin page:
+- Admin
+
+7. System Boundaries
+
+The system is focused on text safety analysis and moderation support. It does not only detect harmful language; it also provides workflow tools for storage, alerts, reporting, monitoring, and administration.
+
+The backend exposes JWT-protected APIs for user and admin workflows, while a few public endpoints remain open for signup, login, contact submission, and text or Twitter analysis.
+
+8. Summary
+
+In short, the user side is for analysis, history, alerts, settings, exports, and support. The admin side is for monitoring users, reviewing content, managing tickets, handling reports, and controlling the platform at a higher level.
